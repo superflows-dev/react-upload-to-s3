@@ -35,6 +35,10 @@
 </ul>
 <a href="https://youtu.be/orIp4-xkbcU"><img src="https://user-images.githubusercontent.com/108924653/182761287-ab320e73-17da-418b-91de-d1cf4aa88603.png" width="300"/></a>
 
+## Demo
+
+[![Demo](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/react-ts-kz4eqr?file=App.tsx)
+
 ## Install
 
 ```bash
@@ -150,6 +154,8 @@ Remember that this region specific endpoint also has to be provided as a prop to
 Once you are through with installing the dependencies and the AWS configuration, using the component becomes fairly simple. Please refer to the Usage below.
 
 ## Usage
+
+[![Demo](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/react-ts-kz4eqr?file=App.tsx)
 
 ### Props
 
