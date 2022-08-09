@@ -1,6 +1,6 @@
 {
   "name": "react-upload-to-s3",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A react component for uploading files to AWS S3",
   "author": "superflows-dev",
   "license": "MIT",
@@ -27,7 +27,7 @@
     "react": "^16.0.0||^17.0.0||^18.0.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "12.1.2",
     "babel-eslint": "^10.0.3",
     "cross-env": "^7.0.3",
@@ -53,11 +53,12 @@
     "dist"
   ],
   "dependencies": {
-    "aws-sdk": "^2.1185.0",
+    "aws-sdk": "^2.1190.0",
     "bootstrap": "^5.2.0",
-    "react-bootstrap": "^2.4.0",
+    "react-bootstrap": "^2.5.0",
     "react-bootstrap-icons": "^1.8.4",
-    "react-ui-components-superflows": "^1.0.28"
+    "react-ui-components-superflows": "^1.0.29",
+    "react-ui-themes-superflows": "^1.0.11"
   },
   "keywords": [
     "react",

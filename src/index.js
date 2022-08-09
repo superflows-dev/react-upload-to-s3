@@ -3,7 +3,8 @@ import {useState, useRef} from 'react'
 import { Col, Row, Container } from 'react-bootstrap';
 import { CloudArrowUp, Check2Circle, ExclamationCircle, FilePdf, FileEarmarkPlay, Scissors, BoxArrowLeft, BoxArrowRight } from 'react-bootstrap-icons';
 import * as Icons from 'react-bootstrap-icons';
-import { ButtonCancel, ButtonNeutral, ButtonNext } from 'react-ui-components-superflows';
+import { ButtonNeutral, ButtonNext } from 'react-ui-components-superflows';
+import Themes from 'react-ui-themes-superflows'
 
 import {Config} from './config';
 import { Constants } from './constants';
@@ -81,6 +82,8 @@ export const UploadToS3 = (props) => {
   const refCanvas = useRef(null);
   const refCanvasOverlay = useRef(null);
   const refCanvasContainer = useRef(null);
+
+  const defaultTheme = Themes.getTheme('Default');
 
   updateAWSConfigAndGetClient(props.awsRegion, props.awsSecret, props.awsKey, props.awsMediaConvertEndPoint);
 
@@ -870,14 +873,18 @@ export const UploadToS3 = (props) => {
   }
 
   return (
-    <Container onClick={openDialog} className="w-100 border rounded-3 border-secondary pb-3"
+    <Container onClick={openDialog} className="w-100 rounded-3 pb-3"
       style={{
-        background: flow === Config.FLOW_UPLOAD ? 'linear-gradient(to right, #d6f5d6, #d6f5d6 '+progress+'%, white '+progress+'%, white '+(100 - progress)+'%)' : flow === Config.FLOW_SUCESS ? '#d6f5d6' : flow === Config.FLOW_ERROR ? '#FFCCCC' : 'white'
+        background: flow === Config.FLOW_UPLOAD ? 'linear-gradient(to right, #d6f5d6, #d6f5d6 '+progress+'%, white '+progress+'%, white '+(100 - progress)+'%)' : flow === Config.FLOW_SUCESS ? '#d6f5d6' : flow === Config.FLOW_ERROR ? '#FFCCCC' :  props.theme != null ? props.theme.uploadToS3BackgroundColor : defaultTheme.uploadToS3BackgroundColor
       }}
     >
       <Row className='justify-content-center'>
         <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex align-items-center px-3 pt-2 pb-1`} >
-          <div className='me-3'>
+          <div 
+            className='me-3'
+            style={{
+              color: props.theme != null ? props.theme.uploadToS3TitleColor : defaultTheme.uploadToS3TitleColor
+            }}>
               {
                 flow === Config.FLOW_INIT ? Constants.TITLE_FLOW_INIT : flow === Config.FLOW_IMG_CHOSEN ? Constants.TITLE_FLOW_IMAGE_CHOSEN : flow === Config.FLOW_CROP ? Constants.TITLE_FLOW_CROP : flow === Config.FLOW_PREVIEW ? Constants.TITLE_FLOW_PREVIEW : flow === Config.FLOW_UPLOAD ? Constants.TITLE_FLOW_UPLOAD : flow === Config.FLOW_SUCESS ? Constants.TITLE_FLOW_SUCCESS : flow === Config.FLOW_ERROR ? Constants.TITLE_FLOW_ERROR : flow === Config.FLOW_PDF_CHOSEN ? Constants.TITLE_FLOW_PDF_CHOSEN : flow === Config.FLOW_PDF_PREVIEW ? Constants.TITLE_FLOW_PDF_PREVIEW : flow === Config.FLOW_VIDEO_CHOSEN ? Constants.TITLE_FLOW_VIDEO_CHOSEN : flow === Config.FLOW_VIDEO_PREVIEW ? Constants.TITLE_FLOW_VIDEO_PREVIEW : flow === Config.FLOW_VIDEO_PROCESSING ? Constants.TITLE_FLOW_VIDEO_PROCESSING : ""
               }
@@ -888,7 +895,10 @@ export const UploadToS3 = (props) => {
       </Row>
       <Row className='justify-content-center'>
         <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
-          <div className='d-flex flex-grow-1 text-small justify-content-start'>
+          <div className='d-flex flex-grow-1 text-small justify-content-start'
+            style={{
+              color: props.theme != null ? props.theme.uploadToS3SubtitleColor : defaultTheme.uploadToS3SubtitleColor
+            }}>
             <small>
               {
                 flow === Config.FLOW_INIT ? (props.type == 'image' ? 'Images ' + Constants.HINT_FLOW_INIT : props.type == 'video' ? 'Videos ' + Constants.HINT_FLOW_INIT : 'PDFs ' + Constants.HINT_FLOW_INIT) : flow === Config.FLOW_IMG_CHOSEN ? Constants.HINT_FLOW_IMAGE_CHOSEN : flow === Config.FLOW_CROP ? Constants.HINT_FLOW_CROP : flow === Config.FLOW_PREVIEW ? Constants.HINT_FLOW_PREVIEW : flow === Config.FLOW_UPLOAD ? Constants.HINT_FLOW_UPLOAD : flow === Config.FLOW_SUCESS ? Constants.HINT_FLOW_SUCCESS : flow === Config.FLOW_ERROR ? Constants.HINT_FLOW_ERROR : flow === Config.FLOW_PDF_CHOSEN ? Constants.HINT_FLOW_PDF_CHOSEN : flow === Config.FLOW_PDF_PREVIEW ? Constants.HINT_FLOW_PDF_PREVIEW : flow === Config.FLOW_VIDEO_CHOSEN ? Constants.HINT_FLOW_VIDEO_CHOSEN : flow === Config.FLOW_VIDEO_PREVIEW ? Constants.HINT_FLOW_VIDEO_PREVIEW : flow === Config.FLOW_VIDEO_PROCESSING ? Constants.HINT_FLOW_VIDEO_PROCESSING : ""
@@ -901,7 +911,7 @@ export const UploadToS3 = (props) => {
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex text-small justify-content-start pt-3'>
-              <ButtonNext caption="Choose" disabled={false} icon={props.type=="image" ? 'FileImage' : props.type=="pdf" ? 'FilePdf' : 'FilePlay'}/>
+              <ButtonNext caption="Choose" disabled={false} icon={props.type=="image" ? 'FileImage' : props.type=="pdf" ? 'FilePdf' : 'FilePlay'} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3ChooseBackgroundColor : defaultTheme.uploadToS3ChooseBackgroundColor, color: props.theme != null ? props.theme.uploadToS3ChooseColor : defaultTheme.uploadToS3ChooseColor}}/>
             </div>
           </Col>
         </Row>
@@ -911,12 +921,12 @@ export const UploadToS3 = (props) => {
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
-                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: '#dddddd', color: 'black'}} onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
+                <ButtonNeutral caption="Cancel" disabled={false} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}} onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
               </div>
               <div className="me-2" >
-                <ButtonNeutral className="me-2" caption="Crop" disabled={false} icon="Crop" onClick={(event) => {event.stopPropagation(); onCropClicked();}}/>
+                <ButtonNeutral className="me-2" caption="Crop" disabled={false} icon="Crop" onClick={(event) => {event.stopPropagation(); onCropClicked();}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}} />
               </div>
-              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: 'black', color: 'white'}} onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
+              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
             </div>
           </Col>
         </Row>
@@ -952,12 +962,12 @@ export const UploadToS3 = (props) => {
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
-                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: '#dddddd', color: 'black'}} onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
+                <ButtonNeutral caption="Cancel" disabled={false} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}} />
               </div>
               <div className="me-2" >
-                <ButtonNeutral className="me-2" caption="Preview" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}}/>
+                <ButtonNeutral className="me-2" caption="Preview" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}} />
               </div>
-              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: 'black', color: 'white'}} onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
+              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
             </div>
           </Col>
         </Row>
@@ -967,12 +977,12 @@ export const UploadToS3 = (props) => {
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
-                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: '#dddddd', color: 'black'}} onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
+                <ButtonNeutral caption="Cancel" disabled={false} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
               </div>
               <div className="me-2" >
-                <ButtonNeutral className="me-2" caption="Preview / Clip" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}}/>
+                <ButtonNeutral className="me-2" caption="Preview / Clip" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}} />
               </div>
-              <ButtonNeutral className="ms-2" caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: 'black', color: 'white'}} onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
+              <ButtonNeutral className="ms-2" caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}} />
             </div>
           </Col>
         </Row>
@@ -982,12 +992,12 @@ export const UploadToS3 = (props) => {
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
-                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: '#dddddd', color: 'black'}} onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
+                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
               </div>
               <div className="me-2" >
-                <ButtonNeutral className="me-2" caption="Preview" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}}/>
+                <ButtonNeutral className="me-2" caption="Preview" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}} />
               </div>
-              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: 'black', color: 'white'}} onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
+              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
             </div>
           </Col>
         </Row>
@@ -998,9 +1008,9 @@ export const UploadToS3 = (props) => {
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
-                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: '#dddddd', color: 'black'}} onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
+                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
               </div>
-              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: 'black', color: 'white'}} onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
+              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
             </div>
           </Col>
         </Row>
@@ -1011,9 +1021,9 @@ export const UploadToS3 = (props) => {
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
-                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: '#dddddd', color: 'black'}} onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
+                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
               </div>
-              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: 'black', color: 'white'}} onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
+              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
             </div>
           </Col>
         </Row>
@@ -1024,13 +1034,13 @@ export const UploadToS3 = (props) => {
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
-                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: '#dddddd', color: 'black'}} onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
+                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
               </div>
               <div className="me-2" >
                 {(videoStartPosition != null && (videoStartPosition > 0 || videoEndPosition > 0)) && <ButtonNeutral className="me-2" caption="Upload Clip" disabled={false} icon="Scissors" onClick={(event) => {event.stopPropagation(); onUploadClick();}}  custom={{backgroundColor: 'black', color: 'white'}} />}
                 {(videoStartPosition == null || (videoStartPosition === 0 && videoEndPosition === 0)) && <ButtonNeutral className="me-2" caption="Upload Clip" disabled={true} icon="Scissors" />}
               </div>
-              {(videoStartPosition == null || (videoStartPosition === 0 && videoEndPosition === 0)) && <ButtonNeutral caption="Upload" disabled={false} icon="Upload" onClick={(event) => {event.stopPropagation(); onUploadClick()}} custom={{backgroundColor: 'black', color: 'white'}} o/>}
+              {(videoStartPosition == null || (videoStartPosition === 0 && videoEndPosition === 0)) && <ButtonNeutral caption="Upload" disabled={false} icon="Upload" onClick={(event) => {event.stopPropagation(); onUploadClick()}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}} />}
               
             </div>
           </Col>
@@ -1041,7 +1051,7 @@ export const UploadToS3 = (props) => {
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
-              <ButtonNeutral caption="New Upload" disabled={false} icon="PlusCircle" custom={{backgroundColor: 'black', color: 'white'}} onClick={(event) => {event.stopPropagation(); onNewUploadClick()}}/>
+              <ButtonNeutral caption="New Upload" disabled={false} icon="PlusCircle" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onNewUploadClick()}}/>
             </div>
           </Col>
         </Row>
@@ -1051,7 +1061,7 @@ export const UploadToS3 = (props) => {
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
-              <ButtonNeutral caption="Try Again" disabled={false} icon="PlusCircle" custom={{backgroundColor: 'black', color: 'white'}} onClick={(event) => {event.stopPropagation(); onNewUploadClick()}}/>
+              <ButtonNeutral caption="Try Again" disabled={false} icon="PlusCircle" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onNewUploadClick()}}/>
             </div>
           </Col>
         </Row>
