@@ -1047,7 +1047,7 @@ export const UploadToS3 = (props) => {
         </Row>
       }
 
-      {(flow === Config.FLOW_SUCESS) && 
+      {(flow === Config.FLOW_SUCESS && (props.showNewUpload == null || (props.showNewUpload != null && props.showNewUpload != false))) && 
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>

@@ -54,6 +54,7 @@ npm install --save bootstrap
 npm install --save react-bootstrap
 npm install --save react-bootstrap-icons
 npm install --save react-ui-components-superflows
+npm install --save react-ui-themes-superflows
 ```
 
 ## Configuration
@@ -167,38 +168,44 @@ Once you are through with installing the dependencies and the AWS configuration,
 - type: can be image / video / pdf
 - mediaConvertRole: Media convert role
 - onResult: Result callback
+- theme: UI Theme (optional)
+- showNewUpload: Flag which enables the display of New Upload button on the success screen (optional, default value is true)
 
 
 ```jsx
 
 import React from 'react'
 
+import Themes from 'react-ui-themes-superflows'
 import { Col, Row, Container } from 'react-bootstrap';
 import { UploadToS3 } from 'react-upload-to-s3'
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const App = () => {
 
-  return (
-    <Container className='mt-5'>
-      <Row className='justify-content-center'>
-        
-        <Col sm={12} xs={12} md={6} xxl={6}>
-          <UploadToS3 
-            bucket="myuploads"
-            awsRegion="awsRegion"
-            awsKey="awsAccessKey"
-            awsSecret="awsSecret"
-            awsMediaConvertEndPoint="https://*********.mediaconvert.<awsRegion>.amazonaws.com"
-            type="pdf"
-            mediaConvertRole="mediaconvert_role"
-            onResult={(result) => {console.log('on Result', result);}} />
-        </Col>
-        
-      </Row>
-    </Container>
+    const theme = Themes.getTheme("Default");
 
-  );
+    return (
+        <Container className='mt-5'>
+        <Row className='justify-content-center'>
+            
+            <Col sm={12} xs={12} md={6} xxl={6}>
+            <UploadToS3 
+                bucket="myuploads"
+                awsRegion="awsRegion"
+                awsKey="awsAccessKey"
+                awsSecret="awsSecret"
+                awsMediaConvertEndPoint="https://*********.mediaconvert.<awsRegion>.amazonaws.com"
+                type="pdf"
+                mediaConvertRole="mediaconvert_role"
+                theme={theme}
+                showNewUpload={false}
+                onResult={(result) => {console.log('on Result', result);}} />
+            </Col>
+            
+        </Row>
+        </Container>
+     );
 
 }
 
