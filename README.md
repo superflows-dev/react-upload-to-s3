@@ -1,6 +1,6 @@
 # react-upload-to-s3
 
-> An all-in-one react component for uploading images, documents and videos to AWS S3
+> The all-in-one react-only component for uploading images, documents and videos to AWS S3. This is a pure front-end component and only requires AWS configuration at the backend, no backend code is necessary.
 
 [![NPM](https://img.shields.io/npm/v/react-upload-to-s3.svg)](https://www.npmjs.com/package/react-upload-to-s3) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
