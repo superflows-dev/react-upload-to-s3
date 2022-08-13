@@ -4,6 +4,10 @@
 
 [![NPM](https://img.shields.io/npm/v/react-upload-to-s3.svg)](https://www.npmjs.com/package/react-upload-to-s3) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
+## What's New
+
+- Thumbnail auto generation and capture feature
+
 ## How it can be used
 
 ### Upload an image to S3 (with easy crop)
