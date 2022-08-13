@@ -16,15 +16,16 @@
 </ul>
 <a href="https://youtu.be/Qh3JkrE0UEI"><img src="https://user-images.githubusercontent.com/108924653/182695777-9eb6cd08-d2e2-4e32-b1ba-f9e592c14abf.png" width="300"/></a>
 
-### Upload a video to S3 (with easy clip)
+### Upload a video to S3 (with thumbnail generator & easy clip)
 
 <ul>
 <li>Choose a video</li>
-<li>Preview it</li>
-<li>Clip it if required</li>
+<li>Preview the video and the generated thumbnail</li>
+<li>Capture a new thumbnail if required</li>
+<li>Clip the video from start and end if required</li>
 <li>Upload to S3</li>
 </ul>
-<a href="https://youtu.be/9TeJgi-irF4"><img src="https://user-images.githubusercontent.com/108924653/182755648-b1515130-bfae-424d-8629-401e85303243.png" width="300"/></a>
+<a href="https://youtu.be/zRZ4JLrAbf4"><img src="https://user-images.githubusercontent.com/108924653/182755648-b1515130-bfae-424d-8629-401e85303243.png" width="300"/></a>
 
 ### Upload a pdf to S3
 

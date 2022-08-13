@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import {useState, useRef} from 'react'
-import { Col, Row, Container } from 'react-bootstrap';
-import { CloudArrowUp, Check2Circle, ExclamationCircle, FilePdf, FileEarmarkPlay, Scissors, BoxArrowLeft, BoxArrowRight } from 'react-bootstrap-icons';
+import { Col, Row, Container, Button } from 'react-bootstrap';
+import { CloudArrowUp, Check2Circle, ExclamationCircle, FilePdf, FileEarmarkPlay, Scissors, BoxArrowLeft, BoxArrowRight, CameraFill, Eye } from 'react-bootstrap-icons';
 import * as Icons from 'react-bootstrap-icons';
 import { ButtonNeutral, ButtonNext } from 'react-ui-components-superflows';
 import Themes from 'react-ui-themes-superflows'
@@ -52,6 +52,7 @@ export const UploadToS3 = (props) => {
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
   const [progress , setProgress] = useState(0);
   const [flow, setFlow] = useState(Config.FLOW_INIT)
+  const [subFlow, setSubFlow] = useState(Config.FLOW_VIDEO_PREVIEW_INIT)
   const [moveX, setMoveX] = useState(0);
   const [moveY, setMoveY] = useState(0)
   const [tsX, setTsX] = useState(0);
@@ -66,14 +67,20 @@ export const UploadToS3 = (props) => {
   const [jobStatus, setJobStatus] = useState('')
   const [ext, setExt] = useState('')
   const [src, setSrc] = useState('')
+  const [srcThumbnail, setSrcThumbnail] = useState('')
   const [videoName, setVideoName] = useState(null);
   const [videoDuration, setVideoDuration] = useState(null);
   const [videoSize, setVideoSize] = useState(null);
+  const [videoWidth, setVideoWidth] = useState(0);
+  const [videoHeight, setVideoHeight] = useState(0);
   const [videoCurrentTime, setVideoCurrentTime] = useState(null);
   const [videoStartPosition, setVideoStartPosition] = useState(null);
   const [videoEndPosition, setVideoEndPosition] = useState(null);
   const [pdfName, setPdfName] = useState('')
   const [pdfSize, setPdfSize] = useState('')
+  const [disableMarkStart, setDisableMarkStart] = useState(false);
+  const [disableMarkEnd, setDisableMarkEnd] = useState(false);
+
   const { [props.icon]: Icon } = Icons
   const refInputImage = useRef(null);
   const refInputPdf = useRef(null);
@@ -82,6 +89,7 @@ export const UploadToS3 = (props) => {
   const refCanvas = useRef(null);
   const refCanvasOverlay = useRef(null);
   const refCanvasContainer = useRef(null);
+  const refCanvasThumbnail = useRef(null);
 
   const defaultTheme = Themes.getTheme('Default');
 
@@ -107,6 +115,10 @@ export const UploadToS3 = (props) => {
 
   function setFlowWrap(value) {
     setTimeout(() => { setFlow(value);}, 500);
+  }
+
+  function setSubFlowWrap(value) {
+    setTimeout(() => { setSubFlow(value);}, 500);
   }
 
   function setProgressWrap(value) {
@@ -167,6 +179,23 @@ export const UploadToS3 = (props) => {
   function onTimeUpdate() {
     //console.logg('currentime', refInputVideoPreview.current.currentTime);
     setVideoCurrentTime(parseInt(refInputVideoPreview.current.currentTime));
+
+    setDisableMarkStart(false);
+    setDisableMarkEnd(false);
+
+    if(parseInt(videoStartPosition) > 0 || parseInt(videoEndPosition)) {
+      if(parseInt(videoStartPosition) > 0) {
+        if(parseInt(refInputVideoPreview.current.currentTime) < parseInt(videoStartPosition)) {
+          setDisableMarkEnd(true);
+        }
+      }
+      if(parseInt(videoEndPosition) > 0) {
+        if(parseInt(refInputVideoPreview.current.currentTime) > parseInt(videoEndPosition)) {
+          setDisableMarkStart(true);
+        }
+      }
+    }
+
   }
 
   function onMarkStartPosition() {
@@ -208,6 +237,44 @@ export const UploadToS3 = (props) => {
     
   }
 
+  function uploadThumbnail(url) {
+    let blob = null;
+    blob = dataURItoBlob(srcThumbnail);
+    const fileName = props.type + "_" + (new Date().getTime()) + ".jpg";
+
+    const params = {
+        ACL: 'public-read',
+        Body: blob,
+        Bucket: props.bucket,
+        Key: fileName,
+        ContentType: fileType
+    };
+
+    getMyBucket(props.bucket, props.awsRegion).putObject(params)
+      .on('httpUploadProgress', (evt) => {
+
+        const progressVal = Math.round((evt.loaded / evt.total) * 100);
+        //console.logg('progress', progressVal);
+        setProgressWrap(progressVal)
+
+        if(progressVal === 100) {
+          setFlowWrap(Config.FLOW_SUCESS);
+          props.onResult({result: true, url: url, thumbnail: props.bucket + "/" + fileName})
+        }
+
+      })
+      .send((err) => {
+          if (err) {
+            if(props.onResult != null) {
+              props.onResult(
+                {result: false, error: err}
+              )
+              setFlowWrap(Config.FLOW_ERROR);
+            }
+          }
+      })
+  }
+
   async function getJobStatus(jobId, s3Input) {
 
     var jobStatusPromise = new AWS.MediaConvert({apiVersion: '2017-08-29'}).getJob({Id: jobId}).promise();
@@ -219,10 +286,10 @@ export const UploadToS3 = (props) => {
         } else if(data.Job?.Status == Constants.JOB_STATUS_COMPLETE) {
           deleteOriginal(s3Input);
           if(props.onResult != null) {
+            
             const url = s3Input.replace("s3://", "").split(".")[0] + data.Job?.Settings.OutputGroups[0].CustomName + "." + ext;
-            props.onResult(
-              {result: true, url: url}
-            )
+            uploadThumbnail(url);
+            
           }
           setFlowWrap(Config.FLOW_SUCESS);
         }
@@ -356,6 +423,8 @@ export const UploadToS3 = (props) => {
         ContentType: fileType
     };
 
+    console.log('upload file', fileName);
+
     getMyBucket(props.bucket, props.awsRegion).putObject(params)
       .on('httpUploadProgress', (evt) => {
 
@@ -371,12 +440,7 @@ export const UploadToS3 = (props) => {
               setFlowWrap(Config.FLOW_VIDEO_PROCESSING)
               createMediaConvertJob(props.bucket + "/" + fileName)
             } else {
-              if(props.onResult != null) {
-                props.onResult(
-                  {result: true, url: props.bucket + "/" + fileName}
-                )
-              }
-              setFlowWrap(Config.FLOW_SUCESS);
+              uploadThumbnail(props.bucket + "/" + fileName);
             }
             clearInputs();
           } else {
@@ -480,7 +544,7 @@ export const UploadToS3 = (props) => {
     } else {
 
       const [file] = refInputVideo.current.files
-      //console.logg(file);
+      console.log(file);
 
       if(file) {
         var reader = new FileReader();
@@ -504,15 +568,76 @@ export const UploadToS3 = (props) => {
         video.preload = 'metadata';
 
         video.onloadedmetadata = function() {
+
           var duration = video.duration;
           setVideoDuration(parseInt(duration));
+          setVideoWidth(parseInt(video.videoWidth));
+          setVideoHeight(parseInt(video.videoHeight));
         }
         video.src = URL.createObjectURL(file);
+        video.load();
       }
 
     }
 
   }
+
+  function showThumbnail(value) {
+    if(value) {
+      setSubFlowWrap(Config.FLOW_VIDEO_PREVIEW_THUMBNAIL_VIEW);
+    } else {
+      setSubFlowWrap(Config.FLOW_VIDEO_PREVIEW_INIT);
+    }
+  }
+
+  function captureThumbnail() {
+    const canvasScreenWidth = 100;
+    const canvasScreenHeight = (canvasScreenWidth*videoHeight) / videoWidth;
+
+    const ctxTemp = refCanvasThumbnail.current.getContext('2d');
+
+    console.log('screen Height', canvasScreenHeight);
+
+    refCanvasThumbnail.current.style.height = canvasScreenHeight;
+    refCanvasThumbnail.current.width = videoWidth;
+    refCanvasThumbnail.current.height = videoHeight;
+
+    ctxTemp.imageSmoothingEnabled = false;
+    ctxTemp.drawImage(
+      refInputVideoPreview.current, 
+      0, 
+      0, 
+      videoWidth, 
+      videoHeight);
+
+    setSrcThumbnail(refCanvasThumbnail.current.toDataURL('image/jpeg'));
+  }
+
+  useEffect(() => {
+
+    if(flow === Config.FLOW_VIDEO_PREVIEW && subFlow === Config.FLOW_VIDEO_PREVIEW_THUMBNAIL_VIEW) {
+
+
+
+    }
+
+  }, [subFlow])
+
+  // Draws the video thumbnail on canvas
+
+  useEffect(() => {
+
+    if(flow === Config.FLOW_VIDEO_PREVIEW && videoWidth > 0 && videoHeight > 0) {
+
+      refInputVideoPreview.current.addEventListener('play', (event) => {
+
+        captureThumbnail();
+
+      })
+    }
+
+  }, [flow, videoWidth, videoHeight])
+
 
   // Draws the cropped area
 
@@ -951,7 +1076,15 @@ export const UploadToS3 = (props) => {
             <div className="alert alert-secondary" role="alert">
               <FileEarmarkPlay className='me-2' style={{marginBottom: '2px'}}/>
               {
-                 videoName + ' ' + new Date(videoDuration * 1000).toISOString().substring(11, 19) + ' ' + parseFloat(videoSize).toFixed(2) + ' KB'
+                videoName
+              }
+              <br /><b>Duration &nbsp;</b>
+              {
+                new Date(videoDuration * 1000).toISOString().substring(11, 19)
+              }
+              <br /><b>Size &nbsp;</b>
+              {
+                parseFloat(videoSize).toFixed(2) + ' KB'
               }
             </div>
           </Col>
@@ -979,10 +1112,8 @@ export const UploadToS3 = (props) => {
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
                 <ButtonNeutral caption="Cancel" disabled={false} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
               </div>
-              <div className="me-2" >
-                <ButtonNeutral className="me-2" caption="Preview / Clip" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}} />
-              </div>
-              <ButtonNeutral className="ms-2" caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}} />
+              <ButtonNeutral className="me-2" caption="Preview" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}   />
+              {/* <ButtonNeutral className="ms-2" caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}} /> */}
             </div>
           </Col>
         </Row>
@@ -997,7 +1128,7 @@ export const UploadToS3 = (props) => {
               <div className="me-2" >
                 <ButtonNeutral className="me-2" caption="Preview" disabled={false} icon="Eye" onClick={(event) => {event.stopPropagation(); onPreviewClicked();}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}} />
               </div>
-              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
+              <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
             </div>
           </Col>
         </Row>
@@ -1021,7 +1152,7 @@ export const UploadToS3 = (props) => {
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
               <div className="me-2 flex-grow-1 d-flex justify-content-start" >
-                <ButtonNeutral caption="Cancel" disabled={false}  custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
+                <ButtonNeutral caption="Cancel" disabled={false} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3CancelBackgroundColor : defaultTheme.uploadToS3CancelBackgroundColor, color: props.theme != null ? props.theme.uploadToS3CancelColor : defaultTheme.uploadToS3CancelColor}}  onClick={(event) => {event.stopPropagation(); onCancelClicked();}}/>
               </div>
               <ButtonNeutral caption="Upload" disabled={false} icon="Upload" custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}}  onClick={(event) => {event.stopPropagation(); onUploadClick()}}/>
             </div>
@@ -1029,7 +1160,7 @@ export const UploadToS3 = (props) => {
         </Row>
       }
 
-    {(flow === Config.FLOW_VIDEO_PREVIEW) && 
+      {(flow === Config.FLOW_VIDEO_PREVIEW) && 
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1077,113 +1208,204 @@ export const UploadToS3 = (props) => {
 
       {(flow === Config.FLOW_VIDEO_PREVIEW) &&
         <Row className='justify-content-center mt-3'>
-          <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center pt-3 px-3 justify-content-between `} >
-            <div className='d-flex align-items-center' style={{cursor: 'pointer'}} onClick={onMarkStartPosition}><small><Scissors />&nbsp;&nbsp;<span>Mark Start Position</span></small></div>
-            <div className='d-flex align-items-center' style={{cursor: 'pointer'}} onClick={onMarkEndPosition}><small><Scissors />&nbsp;&nbsp;<span>Mark End Position</span></small></div>
-          </Col>
-        </Row>
-      }
-
-      {(flow === Config.FLOW_VIDEO_PREVIEW) &&
-        <Row className='justify-content-center mt-1'>
-          <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 justify-content-between text-muted`} >
-            <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>
-              {(videoStartPosition != null && videoStartPosition > 0) && 
-                <div className='d-flex align-items-center' onClick={gotoStartPosition}>
-                  {new Date(videoStartPosition * 1000).toISOString().substring(11, 19)}
-                  &nbsp;
-                  <BoxArrowRight />
-                </div>
-              }
-            </div>
-            <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>            
-              {(videoEndPosition != null && videoEndPosition > 0) && 
-                <div className='d-flex align-items-center' onClick={gotoEndPosition}>
-                  <BoxArrowLeft />
-                  &nbsp;
-                  {new Date(videoEndPosition * 1000).toISOString().substring(11, 19)}
-                </div>
-              }
-            </div>
-          </Col>
-        </Row>
-      }
-
-      {(flow === Config.FLOW_VIDEO_PREVIEW) &&
-        <Row className='justify-content-center mt-3'>
-          <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
-            <div
-              className='d-flex justify-content-center'
-              style={{
-                width: '100%',
-                position: 'relative',
-                }}>
-                <video ref={refInputVideoPreview} controls autoPlay style={{backgroundColor: 'black', width: '100%', height: '50vh'}} src={src} onTimeUpdate={onTimeUpdate}></video>
-                <div 
-                  style={{
-                    position: 'absolute',
-                    left: windowDimensions.height < windowDimensions.width ? '2%' : '5%',
-                    right: windowDimensions.height < windowDimensions.width ? '2%' : '5%',
-                    height: '100%',
-                    width: windowDimensions.height < windowDimensions.width ? '96%' : '90%',
-                    pointerEvents: 'none'
+          <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center pt-2 px-3 justify-content-center border-top`} >
+            <Container className='p-0 ms-0 me-0 mb-0 mt-2 w-100' >
+              <Row className='m-0 p-0'>
+                <Col className='m-0 p-0' sm={12} xs={12} md={12} lg={12} xl={12} xxl={12}  style={{
+                    position: 'relative'
                   }}>
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      top: '80%',
-                      left: '0px',
-                      background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
-                      opacity: '0.3',
-                      width: (videoStartPosition == null || videoStartPosition == 0) ? '0%' : (((videoStartPosition*100)/videoDuration)) + '%',
-                      height: '20%',
-                      pointerEvents: 'none',
-                      borderRight: 'dotted 1px white'
-                    }}>
+
+                  <div className='w-100 mb-2'>
+                    <small><b className='text-muted'>Thumbnail</b></small>
                   </div>
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      top: '0px',
-                      left: '0px',
-                      background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
-                      opacity: '0.3',
-                      width: (videoStartPosition == null || videoStartPosition == 0) ? '0%' : (((videoStartPosition*100)/videoDuration)) + '%',
-                      height: '20%',
-                      pointerEvents: 'none',
-                      borderRight: 'dotted 1px white'
-                    }}>
+                  <div className='d-flex justify-content-between align-items-center mb-3'>
+                    <div className='d-flex align-items-center' >
+                      <canvas className='me-3 rounded-3' ref={refCanvasThumbnail} style={{width: Config.THUMBNAIL_WIDTH + 'px'}} /> 
+                      <Button variant="btn btn-sm btn-secondary py-1 px-2" onClick={() => {captureThumbnail()}}>Capture&nbsp;&nbsp;<CameraFill style={{marginBottom: '2px'}}/></Button>
+                    </div>
+                    <Button variant="btn btn-sm btn-outline py-1 px-2 ms-3" onClick={() => {showThumbnail(true)}}>View&nbsp;&nbsp;<Icons.EyeFill style={{marginBottom: '2px'}}/></Button>                    
                   </div>
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      top: '80%',
-                      right: '0px',
-                      background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
-                      opacity: '0.3',
-                      width: (videoEndPosition == null || videoEndPosition == 0) ? '0%' : (((videoDuration - videoEndPosition)*100)/videoDuration) + '%',
-                      height: '20%',
-                      pointerEvents: 'none',
-                      borderRight: 'dotted 1px left'
-                    }}>
+
+                </Col>
+                <Col className='m-0 p-0' sm={12} xs={12} md={12} lg={12} xl={12} xxl={12}  style={{
+                    position: 'relative'
+                  }}>
+
+                  <div className='w-100 mb-2'>
+                    <small><b className='text-muted'>Preview &amp; Clip Video</b></small>
                   </div>
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      top: '0px',
-                      right: '0px',
-                      background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
-                      opacity: '0.3',
-                      width: (videoEndPosition == null || videoEndPosition == 0) ? '0%' : (((videoDuration - videoEndPosition)*100)/videoDuration) + '%',
-                      height: '20%',
-                      pointerEvents: 'none',
-                      borderRight: 'dotted 1px left'
-                    }}>
+
+                  <div className='w-100' style={{
+                    position: 'relative'
+                  }}>
+                    <div
+                      className='d-flex justify-content-center'
+                      style={{
+                        width: '100%',
+                        position: 'relative',
+                        }}>
+                        <video ref={refInputVideoPreview} controls autoPlay style={{backgroundColor: 'black', width: '100%', height: '50vh'}} src={src} onTimeUpdate={onTimeUpdate}></video>
+                        <div 
+                          style={{
+                            position: 'absolute',
+                            left: windowDimensions.height < windowDimensions.width ? '2%' : '5%',
+                            right: windowDimensions.height < windowDimensions.width ? '2%' : '5%',
+                            height: '100%',
+                            width: windowDimensions.height < windowDimensions.width ? '96%' : '90%',
+                            pointerEvents: 'none'
+                          }}>
+                          <div 
+                            style={{
+                              position: 'absolute',
+                              top: '80%',
+                              left: '0px',
+                              background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
+                              opacity: '0.3',
+                              width: (videoStartPosition == null || videoStartPosition == 0) ? '0%' : (((videoStartPosition*100)/videoDuration)) + '%',
+                              height: '20%',
+                              pointerEvents: 'none',
+                              borderRight: 'dotted 1px white'
+                            }}>
+                          </div>
+                          <div 
+                            style={{
+                              position: 'absolute',
+                              top: '0px',
+                              left: '0px',
+                              background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
+                              opacity: '0.3',
+                              width: (videoStartPosition == null || videoStartPosition == 0) ? '0%' : (((videoStartPosition*100)/videoDuration)) + '%',
+                              height: '20%',
+                              pointerEvents: 'none',
+                              borderRight: 'dotted 1px white'
+                            }}>
+                          </div>
+                          <div 
+                            style={{
+                              position: 'absolute',
+                              top: '80%',
+                              right: '0px',
+                              background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
+                              opacity: '0.3',
+                              width: (videoEndPosition == null || videoEndPosition == 0) ? '0%' : (((videoDuration - videoEndPosition)*100)/videoDuration) + '%',
+                              height: '20%',
+                              pointerEvents: 'none',
+                              borderRight: 'dotted 1px left'
+                            }}>
+                          </div>
+                          <div 
+                            style={{
+                              position: 'absolute',
+                              top: '0px',
+                              right: '0px',
+                              background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
+                              opacity: '0.3',
+                              width: (videoEndPosition == null || videoEndPosition == 0) ? '0%' : (((videoDuration - videoEndPosition)*100)/videoDuration) + '%',
+                              height: '20%',
+                              pointerEvents: 'none',
+                              borderRight: 'dotted 1px left'
+                            }}>
+                          </div>
+                        </div>
+                    </div>
+
+
+                    <div className='w-100 p-2' style={{position: 'absolute', top: '0px', left: '0px'}}>
+
+                      <div className='d-flex flex-wrap align-items-center justify-content-between'>
+                        
+                        <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>
+                          <ButtonNeutral caption="Mark Start" disabled={disableMarkStart} icon="Scissors" onClick={onMarkStartPosition} />
+                        </div>
+                        <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>
+                          <ButtonNeutral caption="Mark End" disabled={disableMarkEnd} icon="Scissors" onClick={onMarkEndPosition} />
+                        </div>
+
+                      </div>
+                      
+                      <div className='d-flex flex-wrap align-items-center justify-content-between text-muted'>
+                        <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>
+                          <small>
+                            {(videoStartPosition != null && videoStartPosition > 0) && 
+                            <div className='d-flex align-items-center' onClick={gotoStartPosition} style={{backgroundColor: 'black', color: 'white'}}>
+                              {new Date(videoStartPosition * 1000).toISOString().substring(11, 19)}
+                              &nbsp;
+                              <BoxArrowRight />
+                            </div>
+                            }
+                          </small>
+                        </div>
+                        <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>            
+                          <small>
+                          {(videoEndPosition != null && videoEndPosition > 0) && 
+                            <div className='d-flex align-items-center' onClick={gotoEndPosition} style={{backgroundColor: 'black', color: 'white'}}>
+                              <BoxArrowLeft />
+                              &nbsp;
+                              {new Date(videoEndPosition * 1000).toISOString().substring(11, 19)}
+                            </div>
+                          }
+                          </small>
+                        </div>
+                      </div>
+
+                    </div>
+
                   </div>
+
+
+                </Col>
+
+              </Row>
+              <div className='d-flex justify-content-start align-items-start'>
+                <div className='d-flex justify-content-start align-items-start flex-column' style={{position: 'relative'}}>
+                    
                 </div>
-            </div>
+                <div className='flex-grow-1' style={{position: 'relative'}}>
+
+
+                </div>
+              </div>
+              
+            </Container>
           </Col>
         </Row>
+      }
+
+      {(flow === Config.FLOW_VIDEO_PREVIEW && subFlow === Config.FLOW_VIDEO_PREVIEW_THUMBNAIL_VIEW) && 
+        <div className='d-flex justify-content-center align-items-center' style={{
+          position: 'fixed',
+          width: '100%',
+          height: '100%',
+          left: '0px',
+          top: '0px',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)'
+        }}>
+
+          <div className='d-flex justify-content-center align-items-center' style={{
+            position: 'relative',
+            width: '70%',
+            height: '60%',
+          }}>
+
+            <img src={srcThumbnail} style={{
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }} />
+
+            <Button variant="btn btn-outline" style={{
+              position: 'absolute',
+              width: '100px',
+              bottom: '0px',
+              right: '0px',
+              left: '50%',
+              marginLeft: '-50px',
+              color: 'white'
+            }} onClick={() => {showThumbnail(false)}}>
+            Close &nbsp;<Icons.X />
+            </Button>
+          </div>
+
+        </div>
       }
 
       {(flow === Config.FLOW_IMG_CHOSEN || flow === Config.FLOW_CROP || flow === Config.FLOW_PREVIEW) &&
