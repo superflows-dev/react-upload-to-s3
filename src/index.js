@@ -52,6 +52,7 @@ export const UploadToS3 = (props) => {
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
   const [progress , setProgress] = useState(0);
   const [flow, setFlow] = useState(Config.FLOW_INIT)
+  const [type, setType] = useState(Constants.TYPE_IMAGE);
   const [subFlow, setSubFlow] = useState(Config.FLOW_VIDEO_PREVIEW_INIT)
   const [moveX, setMoveX] = useState(0);
   const [moveY, setMoveY] = useState(0)
@@ -240,7 +241,7 @@ export const UploadToS3 = (props) => {
   function uploadThumbnail(url) {
     let blob = null;
     blob = dataURItoBlob(srcThumbnail);
-    const fileName = props.type + "_" + (new Date().getTime()) + ".jpg";
+    const fileName = type + "_" + (new Date().getTime()) + ".jpg";
 
     const params = {
         ACL: 'public-read',
@@ -413,7 +414,7 @@ export const UploadToS3 = (props) => {
       blob = dataURItoBlob(src);
     }
 
-    const fileName = props.type + "_" + (new Date().getTime()) + "." + ext;
+    const fileName = type + "_" + (new Date().getTime()) + "." + ext;
 
     const params = {
         ACL: 'public-read',
@@ -434,7 +435,7 @@ export const UploadToS3 = (props) => {
 
         if(progressVal === 100) {
 
-          if(props.type == Constants.TYPE_VIDEO) {
+          if(type == Constants.TYPE_VIDEO) {
             if((videoStartPosition != null && videoStartPosition > 0) 
             || (videoEndPosition != null && videoEndPosition > 0)) {
               setFlowWrap(Config.FLOW_VIDEO_PROCESSING)
@@ -472,13 +473,13 @@ export const UploadToS3 = (props) => {
 
     //console.logg('props', props.type);
 
-    if(props.type == Constants.TYPE_IMAGE) {
+    if(type == Constants.TYPE_IMAGE) {
 
       if(flow === Config.FLOW_INIT) {
         refInputImage.current.click();
       }
 
-    } else if(props.type == Constants.TYPE_PDF) {
+    } else if(type == Constants.TYPE_PDF) {
 
       if(flow === Config.FLOW_INIT) {
         refInputPdf.current.click();
@@ -496,7 +497,7 @@ export const UploadToS3 = (props) => {
 
   function onFileSelectionChanged(event) {
 
-    if(props.type == Constants.TYPE_IMAGE) {
+    if(type == Constants.TYPE_IMAGE) {
 
       const [file] = refInputImage.current.files
       //console.logg(file);
@@ -516,7 +517,7 @@ export const UploadToS3 = (props) => {
         reader.readAsDataURL(file);
       }
 
-    } else if(props.type == Constants.TYPE_PDF) {
+    } else if(type == Constants.TYPE_PDF) {
 
       const [file] = refInputPdf.current.files
       if(file) {
@@ -773,6 +774,10 @@ export const UploadToS3 = (props) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    setType(props.type);
+  }, [props.type])
+
   // Mouse Events
 
   function onMouseMove(event) {
@@ -1026,7 +1031,7 @@ export const UploadToS3 = (props) => {
             }}>
             <small>
               {
-                flow === Config.FLOW_INIT ? (props.type == 'image' ? 'Images ' + Constants.HINT_FLOW_INIT : props.type == 'video' ? 'Videos ' + Constants.HINT_FLOW_INIT : 'PDFs ' + Constants.HINT_FLOW_INIT) : flow === Config.FLOW_IMG_CHOSEN ? Constants.HINT_FLOW_IMAGE_CHOSEN : flow === Config.FLOW_CROP ? Constants.HINT_FLOW_CROP : flow === Config.FLOW_PREVIEW ? Constants.HINT_FLOW_PREVIEW : flow === Config.FLOW_UPLOAD ? Constants.HINT_FLOW_UPLOAD : flow === Config.FLOW_SUCESS ? Constants.HINT_FLOW_SUCCESS : flow === Config.FLOW_ERROR ? Constants.HINT_FLOW_ERROR : flow === Config.FLOW_PDF_CHOSEN ? Constants.HINT_FLOW_PDF_CHOSEN : flow === Config.FLOW_PDF_PREVIEW ? Constants.HINT_FLOW_PDF_PREVIEW : flow === Config.FLOW_VIDEO_CHOSEN ? Constants.HINT_FLOW_VIDEO_CHOSEN : flow === Config.FLOW_VIDEO_PREVIEW ? Constants.HINT_FLOW_VIDEO_PREVIEW : flow === Config.FLOW_VIDEO_PROCESSING ? Constants.HINT_FLOW_VIDEO_PROCESSING : ""
+                flow === Config.FLOW_INIT ? (type == 'image' ? 'Images ' + Constants.HINT_FLOW_INIT : type == 'video' ? 'Videos ' + Constants.HINT_FLOW_INIT : 'PDFs ' + Constants.HINT_FLOW_INIT) : flow === Config.FLOW_IMG_CHOSEN ? Constants.HINT_FLOW_IMAGE_CHOSEN : flow === Config.FLOW_CROP ? Constants.HINT_FLOW_CROP : flow === Config.FLOW_PREVIEW ? Constants.HINT_FLOW_PREVIEW : flow === Config.FLOW_UPLOAD ? Constants.HINT_FLOW_UPLOAD : flow === Config.FLOW_SUCESS ? Constants.HINT_FLOW_SUCCESS : flow === Config.FLOW_ERROR ? Constants.HINT_FLOW_ERROR : flow === Config.FLOW_PDF_CHOSEN ? Constants.HINT_FLOW_PDF_CHOSEN : flow === Config.FLOW_PDF_PREVIEW ? Constants.HINT_FLOW_PDF_PREVIEW : flow === Config.FLOW_VIDEO_CHOSEN ? Constants.HINT_FLOW_VIDEO_CHOSEN : flow === Config.FLOW_VIDEO_PREVIEW ? Constants.HINT_FLOW_VIDEO_PREVIEW : flow === Config.FLOW_VIDEO_PROCESSING ? Constants.HINT_FLOW_VIDEO_PROCESSING : ""
               }
             </small>
           </div>
@@ -1036,7 +1041,7 @@ export const UploadToS3 = (props) => {
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex text-small justify-content-start pt-3'>
-              <ButtonNext caption="Choose" disabled={false} icon={props.type=="image" ? 'FileImage' : props.type=="pdf" ? 'FilePdf' : 'FilePlay'} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3ChooseBackgroundColor : defaultTheme.uploadToS3ChooseBackgroundColor, color: props.theme != null ? props.theme.uploadToS3ChooseColor : defaultTheme.uploadToS3ChooseColor}}/>
+              <ButtonNext caption="Choose" disabled={false} icon={type=="image" ? 'FileImage' : type=="pdf" ? 'FilePdf' : 'FilePlay'} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3ChooseBackgroundColor : defaultTheme.uploadToS3ChooseBackgroundColor, color: props.theme != null ? props.theme.uploadToS3ChooseColor : defaultTheme.uploadToS3ChooseColor}}/>
             </div>
           </Col>
         </Row>
