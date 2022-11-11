@@ -97,15 +97,32 @@ export const UploadToS3 = (props) => {
   updateAWSConfigAndGetClient(props.awsRegion, props.awsSecret, props.awsKey, props.awsMediaConvertEndPoint);
 
   function dataURItoBlob(dataURI) {
-    var binary = atob(dataURI.split(',')[1]);
-    var array = [];
-    for(var i = 0; i < binary.length; i++) {
-        array.push(binary.charCodeAt(i));
+    // var binary = atob(dataURI.split(',')[1]);
+    // var array = [];
+    // for(var i = 0; i < binary.length; i++) {
+    //     array.push(binary.charCodeAt(i));
+    // }
+    // return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+    // convert base64 to raw binary data held in a string
+    var byteString = atob(dataURI.split(',')[1]);
+
+    // separate out the mime component
+    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    // write the bytes of the string to an ArrayBuffer
+    var arrayBuffer = new ArrayBuffer(byteString.length);
+    var _ia = new Uint8Array(arrayBuffer);
+    for (var i = 0; i < byteString.length; i++) {
+        _ia[i] = byteString.charCodeAt(i);
     }
-    return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+
+    var dataView = new DataView(arrayBuffer);
+    var blob = new Blob([dataView], { type: mimeString });
+    return blob;
   }
 
   function onUploadClick() {
+    //console.log('upload click');
     uploadFile(ext)
     setFlowWrap(Config.FLOW_UPLOAD);
   }
@@ -241,6 +258,7 @@ export const UploadToS3 = (props) => {
   function uploadThumbnail(url) {
     let blob = null;
     blob = dataURItoBlob(srcThumbnail);
+    //console.log(srcThumbnail);
     const fileName = type + "_" + (new Date().getTime()) + ".jpg";
 
     const params = {
@@ -248,7 +266,7 @@ export const UploadToS3 = (props) => {
         Body: blob,
         Bucket: props.bucket,
         Key: fileName,
-        ContentType: fileType
+        ContentType: 'jpeg'
     };
 
     getMyBucket(props.bucket, props.awsRegion).putObject(params)
@@ -257,10 +275,20 @@ export const UploadToS3 = (props) => {
         const progressVal = Math.round((evt.loaded / evt.total) * 100);
         //console.logg('progress', progressVal);
         setProgressWrap(progressVal)
-
         if(progressVal === 100) {
+          var clipDuration = 0;
+          if(videoStartPosition != null && videoEndPosition != null) {
+            clipDuration = videoDuration - (videoEndPosition - videoStartPosition);
+          } else if(videoStartPosition == null && videoEndPosition != null) {
+            clipDuration = videoEndPosition;
+          } else if(videoStartPosition != null && videoEndPosition == null) {
+            clipDuration = videoDuration - videoStartPosition;
+          } else {
+            clipDuration = videoDuration
+          }
+          //console.log(videoStartPosition, videoEndPosition, videoDuration);
           setFlowWrap(Config.FLOW_SUCESS);
-          props.onResult({result: true, url: url, thumbnail: props.bucket + "/" + fileName})
+          props.onResult({result: true, url: url, thumbnail: props.bucket + "/" + fileName, processedVideoDuration: clipDuration, processedVideoSize: parseFloat((parseFloat(videoSize.replace('KB', "")) * parseInt(clipDuration))/parseInt(videoDuration)).toFixed(2) + 'KB',  originalVideoName: videoName, originalVideoSize: videoSize, originalVideoDuration: videoDuration})
         }
 
       })
@@ -287,7 +315,7 @@ export const UploadToS3 = (props) => {
         } else if(data.Job?.Status == Constants.JOB_STATUS_COMPLETE) {
           deleteOriginal(s3Input);
           if(props.onResult != null) {
-            
+            //console.log(data.Job);
             const url = s3Input.replace("s3://", "").split(".")[0] + data.Job?.Settings.OutputGroups[0].CustomName + "." + ext;
             uploadThumbnail(url);
             
@@ -387,6 +415,8 @@ export const UploadToS3 = (props) => {
       }
     };
 
+    //console.log(jobTemplate)
+
     var endpointPromise = new AWS.MediaConvert({apiVersion: '2017-08-29'}).createJob(jobTemplate).promise();
 
     // Handle promise's fulfilled/rejected status
@@ -424,7 +454,7 @@ export const UploadToS3 = (props) => {
         ContentType: fileType
     };
 
-    console.log('upload file', fileName);
+    //console.log('upload file', fileName);
 
     getMyBucket(props.bucket, props.awsRegion).putObject(params)
       .on('httpUploadProgress', (evt) => {
@@ -545,7 +575,7 @@ export const UploadToS3 = (props) => {
     } else {
 
       const [file] = refInputVideo.current.files
-      console.log(file);
+//      console.log(file);
 
       if(file) {
         var reader = new FileReader();
@@ -597,7 +627,7 @@ export const UploadToS3 = (props) => {
 
     const ctxTemp = refCanvasThumbnail.current.getContext('2d');
 
-    console.log('screen Height', canvasScreenHeight);
+    //console.log('screen Height', canvasScreenHeight);
 
     refCanvasThumbnail.current.style.height = canvasScreenHeight;
     refCanvasThumbnail.current.width = videoWidth;
@@ -1404,7 +1434,8 @@ export const UploadToS3 = (props) => {
               right: '0px',
               left: '50%',
               marginLeft: '-50px',
-              color: 'white'
+              color: 'white',
+              backgroundColor: 'black',
             }} onClick={() => {showThumbnail(false)}}>
             Close &nbsp;<Icons.X />
             </Button>
