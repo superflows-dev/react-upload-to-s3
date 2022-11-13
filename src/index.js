@@ -288,7 +288,23 @@ export const UploadToS3 = (props) => {
           }
           //console.log(videoStartPosition, videoEndPosition, videoDuration);
           setFlowWrap(Config.FLOW_SUCESS);
-          props.onResult({result: true, url: url, thumbnail: props.bucket + "/" + fileName, processedVideoDuration: clipDuration, processedVideoSize: parseFloat((parseFloat(videoSize.replace('KB', "")) * parseInt(clipDuration))/parseInt(videoDuration)).toFixed(2) + 'KB',  originalVideoName: videoName, originalVideoSize: videoSize, originalVideoDuration: videoDuration})
+          
+          
+          let processedVideoSize = parseFloat( (parseFloat(videoSize.replace("KB", "")) * parseInt(clipDuration)) / parseInt(videoDuration) ).toFixed(2) + "KB";
+          
+          let result = {
+            result: true,
+            url: url,
+            thumbnail: props.bucket + "/" + fileName,
+            processedVideoDuration: clipDuration,
+            processedVideoSize: processedVideoSize,
+            originalVideoName: videoName,
+            originalVideoSize: videoSize,
+            originalVideoWidth: videoWidth,
+            originalVideoHeight: videoHeight,
+            originalVideoDuration: videoDuration,
+          };
+          props.onResult(result)
         }
 
       })
