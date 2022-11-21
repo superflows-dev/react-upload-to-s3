@@ -62,6 +62,114 @@ npm install --save react-ui-components-superflows
 npm install --save react-ui-themes-superflows
 ```
 
+## Usage
+
+[![Demo](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/react-ts-kz4eqr?file=App.tsx)
+
+### Props
+
+- bucket: Name of the S3 bucket
+- cognitoIdentityCredentials: Cognito Identity Pool Object 
+- awsRegion: Region where the bucket exists
+- awsKey: AWS Access Key (should come from environment variables)
+- awsSecret: AWS Secret (should come from environment variables)
+- awsMediaConvertEndPoint: AWS region specific mediaconvert endpoint
+- type: can be image / video / pdf
+- mediaConvertRole: Media convert role
+- onResult: Result callback
+- theme: UI Theme (optional)
+- showNewUpload: Flag which enables the display of New Upload button on the success screen (optional, default value is true)
+
+
+### Usage Method 1 - Less Secure
+
+```jsx
+
+import React from 'react'
+
+import Themes from 'react-ui-themes-superflows'
+import { Col, Row, Container } from 'react-bootstrap';
+import { UploadToS3 } from 'react-upload-to-s3'
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+const App = () => {
+
+    const theme = Themes.getTheme("Default");
+
+    return (
+        <Container className='mt-5'>
+        <Row className='justify-content-center'>
+            
+            <Col sm={12} xs={12} md={6} xxl={6}>
+            <UploadToS3 
+                bucket="myuploads"
+                awsRegion="awsRegion"
+                awsKey="awsAccessKey"
+                awsSecret="awsSecret"
+                awsMediaConvertEndPoint="https://*********.mediaconvert.<awsRegion>.amazonaws.com"
+                type="image"
+                mediaConvertRole="mediaconvert_role"
+                theme={theme}
+                showNewUpload={false}
+                onResult={(result) => {console.log('on Result', result);}} />
+            </Col>
+            
+        </Row>
+        </Container>
+     );
+
+}
+
+export default App
+
+```
+
+### Usage Method 2 - More Secure
+
+```jsx
+
+import React from 'react'
+
+import Themes from 'react-ui-themes-superflows'
+import { Col, Row, Container } from 'react-bootstrap';
+import { UploadToS3 } from 'react-upload-to-s3'
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+const App = () => {
+
+    const theme = Themes.getTheme("Default");
+
+    return (
+        <Container className='mt-5'>
+        <Row className='justify-content-center'>
+            
+            <Col sm={12} xs={12} md={6} xxl={6}>
+            <UploadToS3 
+                bucket="myuploads"
+                awsRegion="awsRegion"
+                cognitoIdentityCredentials={{
+                    IdentityPoolId: 'awsRegion:poolId',
+                }}
+                awsKey=""
+                awsSecret=""
+                awsMediaConvertEndPoint="https://*********.mediaconvert.<awsRegion>.amazonaws.com"
+                type="image"
+                mediaConvertRole="mediaconvert_role"
+                theme={theme}
+                showNewUpload={false}
+                onResult={(result) => {console.log('on Result', result);}} />
+            </Col>
+            
+        </Row>
+        </Container>
+     );
+
+}
+
+export default App
+
+```
+
 ## Configuration
 
 ### AWS S3
@@ -109,14 +217,50 @@ npm install --save react-ui-themes-superflows
 ]
 ```
 
-### AWS IAM
+### AWS MediaConvert
 
-#### SDK User
+AWS mediaconvert is required for video processing. The clip selection happens at the client end, whereas the actual clipping is done by an AWS mediaconvert job. This requires a region specific endpoint and can be easily obtained from the aws cli (aws commandline).
+
+```bash
+aws mediaconvert describe-endpoints --region <region>
+```
+
+Remember that this region specific endpoint also has to be provided as a prop to the upload-to-s3 component. (Refer to the Usage Section)
+
+You will also have to create a mediaconvert role. 
+
+#### MediaConvert Role
+
+- Goto IAM > Roles
+- Select AWS Service as the trusted entity type
+- Choose MediaConvert from the services dropdown
+- Click next on add permissions & attach the following permissions to it - (1) Full access to the particular s3 bucket, (2) Access to the region specific endpoint of the API gateway
+- Name the role as per your choice. I have named it **mediaconvert_role**. (Remember that this role name has to be given as a prop to the upload-to-s3 component, refer to the Usage section)
+
+### Authentication of AWS SDK
+
+#### Method 1 - Pass Credentials Via Props (Less Secure)
 
 - Create an SDK user via the AWS console so that you get access to aws region, aws access key and aws secret, i.e. aws credentials.
 - Ensure that you preserve these credentials in a secure manner.
 - It is especially important that these credentials be stored in the environment files and should never be pushed to a source repository such as git.
-- For this SDK user, give create, add, edit, delete permissions to your S3 bucket via the AWS console. I usually give full access restricted to a particular bucket, like the one which we created in the S3 section above.
+- For this SDK user, give create, add, edit, delete permissions to your S3 bucket via the AWS console. I usually give full access restricted to a particular bucket, like the one which we created in the S3 section above (given below).
+- If you are planning to use this module for video upload, also provide permissions to elemental media convert (given below).
+- An additional permission needs to be given for video processing, for using the passrole method privilege (given below).
+
+#### Method 2 - Use AWS Cognito Federated Identities (Recommended Method)
+
+- Create a new identity pool using Cognito. 
+- It will end up creating two roles, one for users authenticated via cognito and the second, for unauthenticated users
+- Go to Roles in IAM
+- If in your application, unauthenticated & authenticated users will be using this module, then you will need to give s3 and elemental mediaconvert permissions to both the roles.
+- Else, since this module will always be behind the authentication wall, you will need to give s3 and elemental mediaconvert permissions to only the authenticated users role.
+- For S3, a good idea would be to give full access restricted to the particular bucket (given below).
+- If you are planning to use this module for video upload, also provide permissions to elemental media convert (given below).
+- An additional permission is required for video processing for using the passrole method.
+- An additional permission needs to be given for video processing, for using the passrole method privilege (given below).
+
+#### S3 Permission (Needed For Both Methods)
 
 ```bash
 
@@ -136,87 +280,49 @@ npm install --save react-ui-themes-superflows
 
 ```
 
+#### MediaConvert Permissions (Needed For Both Methods)
+
 - For this SDK user, then give the user access to AWS mediaconvert via the AWS console. I have used AWSElementalMediaConvertFullAccess, which is a pre-created AWS policy for this. To find and attach this policy - Select your IAM user > Click add permissions on the user summary screen > Click attach existing policies directly > Search mediaconvert > Apply the AWSElementalMediaConvertFullAccess policy
 
 
-#### MediaConvert Role
+#### Permission to Use PassRole For Video Processing (Needed For Both Methods)
 
-- Goto IAM > Roles
-- Select AWS Service as the trusted entity type
-- Choose MediaConvert from the services dropdown
-- Click next on add permissions
-- Name the role as per your choice. I have named it **mediaconvert_role**. (Remember that this role name has to be given as a prop to the upload-to-s3 component, refer to the Usage section)
-
-### AWS MediaConvert
-
-AWS mediaconvert is required for video processing. The clip selection happens at the client end, whereas the actual clipping is done by an AWS mediaconvert job. This requires a region specific endpoint and can be easily obtained from the aws cli (aws commandline).
+- Create a new inline policy (for method 1, attach to the user, for method 2, attach to the role(s)) with the following json 
 
 ```bash
-aws mediaconvert describe-endpoints --region <region>
-```
-
-Remember that this region specific endpoint also has to be provided as a prop to the upload-to-s3 component. (Refer to the Usage Section)
-
-Once you are through with installing the dependencies and the AWS configuration, using the component becomes fairly simple. Please refer to the Usage below.
-
-## Usage
-
-[![Demo](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/react-ts-kz4eqr?file=App.tsx)
-
-### Props
-
-- bucket: Name of the S3 bucket
-- awsRegion: Region where the bucket exists
-- awsKey: AWS Access Key (should come from environment variables)
-- awsSecret: AWS Secret (should come from environment variables)
-- awsMediaConvertEndPoint: AWS region specific mediaconvert endpoint
-- type: can be image / video / pdf
-- mediaConvertRole: Media convert role
-- onResult: Result callback
-- theme: UI Theme (optional)
-- showNewUpload: Flag which enables the display of New Upload button on the success screen (optional, default value is true)
-
-
-```jsx
-
-import React from 'react'
-
-import Themes from 'react-ui-themes-superflows'
-import { Col, Row, Container } from 'react-bootstrap';
-import { UploadToS3 } from 'react-upload-to-s3'
-import 'bootstrap/dist/css/bootstrap.min.css';
-
-const App = () => {
-
-    const theme = Themes.getTheme("Default");
-
-    return (
-        <Container className='mt-5'>
-        <Row className='justify-content-center'>
-            
-            <Col sm={12} xs={12} md={6} xxl={6}>
-            <UploadToS3 
-                bucket="myuploads"
-                awsRegion="awsRegion"
-                awsKey="awsAccessKey"
-                awsSecret="awsSecret"
-                awsMediaConvertEndPoint="https://*********.mediaconvert.<awsRegion>.amazonaws.com"
-                type="pdf"
-                mediaConvertRole="mediaconvert_role"
-                theme={theme}
-                showNewUpload={false}
-                onResult={(result) => {console.log('on Result', result);}} />
-            </Col>
-            
-        </Row>
-        </Container>
-     );
-
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:PassRole"
+            ],
+            "Resource": "arn:aws:iam::mediaconvert_role_id:role/*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "mediaconvert:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": "iam:ListRoles",
+            "Resource": "*"
+        }
+    ]
 }
 
-export default App
-
 ```
+
+
+Once you are through with installing the dependencies and the AWS configuration, using the component becomes fairly simple. Please refer to the Usage above.
+
+
 
 ## License
 

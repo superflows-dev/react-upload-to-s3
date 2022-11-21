@@ -15,15 +15,19 @@ import * as MediaConvert from "aws-sdk/clients/mediaconvert";
 import { ConfigurationOptions } from 'aws-sdk'
 
 
-function updateAWSConfigAndGetClient(region, secret, key, endpoint) {
+function updateAWSConfigAndGetClient(cognitoIdentityCredentials, region, secret, key, endpoint) {
 
-  const configuration: ConfigurationOptions = {
-    region: region,
-    secretAccessKey: secret,
-    accessKeyId: key
+  if(cognitoIdentityCredentials != null) {
+    AWS.config.region = region; // Region
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials(cognitoIdentityCredentials);
+  } else {
+    const configuration: ConfigurationOptions = {
+      region: region,
+      secretAccessKey: secret,
+      accessKeyId: key
+    }
+    AWS.config.update(configuration)
   }
-
-  AWS.config.update(configuration)
   AWS.config.mediaconvert = {endpoint : endpoint};
   return new AWS.DynamoDB.DocumentClient();
 
@@ -94,7 +98,7 @@ export const UploadToS3 = (props) => {
 
   const defaultTheme = Themes.getTheme('Default');
 
-  updateAWSConfigAndGetClient(props.awsRegion, props.awsSecret, props.awsKey, props.awsMediaConvertEndPoint);
+  updateAWSConfigAndGetClient(props.cognitoIdentityCredentials, props.awsRegion, props.awsSecret, props.awsKey, props.awsMediaConvertEndPoint);
 
   function dataURItoBlob(dataURI) {
     // var binary = atob(dataURI.split(',')[1]);
@@ -1479,7 +1483,7 @@ export const UploadToS3 = (props) => {
               
               <img src={src} className="w-100" 
                 style={{
-                  backgroundColor: 'green',
+                  backgroundColor: 'black',
                   visibility: flow === Config.FLOW_PREVIEW ? 'hidden' : 'visible',
                   pointerEvents: 'none'
                 }}
