@@ -69,7 +69,7 @@ npm install --save react-ui-themes-superflows
 ### Props
 
 - bucket: Name of the S3 bucket
-- cognitoIdentityCredentials: Cognito Identity Pool Object 
+- cognitoIdentityCredentials: Cognito Identity Pool Object
 - awsRegion: Region where the bucket exists
 - awsKey: AWS Access Key (should come from environment variables)
 - awsSecret: AWS Secret (should come from environment variables)
@@ -99,10 +99,11 @@ const App = () => {
     return (
         <Container className='mt-5'>
         <Row className='justify-content-center'>
-            
+
             <Col sm={12} xs={12} md={6} xxl={6}>
-            <UploadToS3 
+            <UploadToS3
                 bucket="myuploads"
+                bucketACL="private|public-read|public-read-write|authenticated-read|aws-exec-read|bucket-owner-read|bucket-owner-full-control"
                 awsRegion="awsRegion"
                 awsKey="awsAccessKey"
                 awsSecret="awsSecret"
@@ -113,7 +114,7 @@ const App = () => {
                 showNewUpload={false}
                 onResult={(result) => {console.log('on Result', result);}} />
             </Col>
-            
+
         </Row>
         </Container>
      );
@@ -142,10 +143,11 @@ const App = () => {
     return (
         <Container className='mt-5'>
         <Row className='justify-content-center'>
-            
+
             <Col sm={12} xs={12} md={6} xxl={6}>
-            <UploadToS3 
+            <UploadToS3
                 bucket="myuploads"
+                bucketACL="private|public-read|public-read-write|authenticated-read|aws-exec-read|bucket-owner-read|bucket-owner-full-control"
                 awsRegion="awsRegion"
                 cognitoIdentityCredentials={{
                     IdentityPoolId: 'awsRegion:poolId',
@@ -159,7 +161,7 @@ const App = () => {
                 showNewUpload={false}
                 onResult={(result) => {console.log('on Result', result);}} />
             </Col>
-            
+
         </Row>
         </Container>
      );
@@ -181,11 +183,12 @@ export default App
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "PublicListGet",
+            "Sid": "PublicListPutGet",
             "Effect": "Allow",
             "Principal": "*",
             "Action": [
                 "s3:List*",
+                "s3:Put*",
                 "s3:Get*"
             ],
             "Resource": [
@@ -227,7 +230,7 @@ aws mediaconvert describe-endpoints --region <region>
 
 Remember that this region specific endpoint also has to be provided as a prop to the upload-to-s3 component. (Refer to the Usage Section)
 
-You will also have to create a mediaconvert role. 
+You will also have to create a mediaconvert role.
 
 #### MediaConvert Role
 
@@ -250,7 +253,7 @@ You will also have to create a mediaconvert role.
 
 #### Method 2 - Use AWS Cognito Federated Identities (Recommended Method)
 
-- Create a new identity pool using Cognito. 
+- Create a new identity pool using Cognito.
 - It will end up creating two roles, one for users authenticated via cognito and the second, for unauthenticated users
 - Go to Roles in IAM
 - If in your application, unauthenticated & authenticated users will be using this module, then you will need to give s3 and elemental mediaconvert permissions to both the roles.
@@ -287,7 +290,7 @@ You will also have to create a mediaconvert role.
 
 #### Permission to Use PassRole For Video Processing (Needed For Both Methods)
 
-- Create a new inline policy (for method 1, attach to the user, for method 2, attach to the role(s)) with the following json 
+- Create a new inline policy (for method 1, attach to the user, for method 2, attach to the role(s)) with the following json
 
 ```bash
 {
