@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react'
-import {useState, useRef} from 'react'
+import { useState, useRef } from 'react'
 import { Col, Row, Container, Button } from 'react-bootstrap';
 import { CloudArrowUp, Check2Circle, ExclamationCircle, FilePdf, FileEarmarkPlay, Scissors, BoxArrowLeft, BoxArrowRight, CameraFill, Eye } from 'react-bootstrap-icons';
 import * as Icons from 'react-bootstrap-icons';
 import { ButtonNeutral, ButtonNext } from 'react-ui-components-superflows';
 import Themes from 'react-ui-themes-superflows'
 
-import {Config} from './config';
+import { Config } from './config';
 import { Constants } from './constants';
 
 import * as AWS from 'aws-sdk'
@@ -108,20 +108,20 @@ export const UploadToS3 = (props) => {
     // }
     // return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
     // convert base64 to raw binary data held in a string
-    var byteString = atob(dataURI.split(',')[1]);
+    const byteString = atob(dataURI.split(',')[1]);
 
     // separate out the mime component
-    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
     // write the bytes of the string to an ArrayBuffer
-    var arrayBuffer = new ArrayBuffer(byteString.length);
-    var _ia = new Uint8Array(arrayBuffer);
-    for (var i = 0; i < byteString.length; i++) {
+    const arrayBuffer = new ArrayBuffer(byteString.length);
+    const _ia = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < byteString.length; i++) {
         _ia[i] = byteString.charCodeAt(i);
     }
 
-    var dataView = new DataView(arrayBuffer);
-    var blob = new Blob([dataView], { type: mimeString });
+    const dataView = new DataView(arrayBuffer);
+    const blob = new Blob([dataView], {type: mimeString});
     return blob;
   }
 
@@ -199,7 +199,7 @@ export const UploadToS3 = (props) => {
   }
 
   function onTimeUpdate() {
-    //console.logg('currentime', refInputVideoPreview.current.currentTime);
+    //console.log('currentime', refInputVideoPreview.current.currentTime);
     setVideoCurrentTime(parseInt(refInputVideoPreview.current.currentTime));
 
     setDisableMarkStart(false);
@@ -252,11 +252,11 @@ export const UploadToS3 = (props) => {
 
     //console.logg(params);
 
-    var deletePromise = getMyBucket(props.bucket, props.awsRegion).deleteObject(params).promise();
+    const deletePromise = getMyBucket(props.bucket, props.awsRegion).deleteObject(params).promise();
     deletePromise.then(function(data) {
       //console.logg('delete result', data);
     });
-    
+
   }
 
   function uploadThumbnail(url) {
@@ -292,10 +292,10 @@ export const UploadToS3 = (props) => {
           }
           //console.log(videoStartPosition, videoEndPosition, videoDuration);
           setFlowWrap(Config.FLOW_SUCESS);
-          
-          
+
+
           let processedVideoSize = parseFloat( (parseFloat(videoSize.replace("KB", "")) * parseInt(clipDuration)) / parseInt(videoDuration) ).toFixed(2) + "KB";
-          
+
           let result = {
             result: true,
             url: url,
@@ -326,19 +326,19 @@ export const UploadToS3 = (props) => {
 
   async function getJobStatus(jobId, s3Input) {
 
-    var jobStatusPromise = new AWS.MediaConvert({apiVersion: '2017-08-29'}).getJob({Id: jobId}).promise();
+    const jobStatusPromise = new AWS.MediaConvert({apiVersion: '2017-08-29'}).getJob({Id: jobId}).promise();
     jobStatusPromise.then(
       function(data) {
         setJobStatus(data.Job?.Status);
-        if(data.Job?.Status == Constants.JOB_STATUS_SUBMITTED) {
+        if(data.Job?.Status === Constants.JOB_STATUS_SUBMITTED) {
           checkJobStatus(jobId, s3Input);
-        } else if(data.Job?.Status == Constants.JOB_STATUS_COMPLETE) {
+        } else if(data.Job?.Status === Constants.JOB_STATUS_COMPLETE) {
           deleteOriginal(s3Input);
           if(props.onResult != null) {
             //console.log(data.Job);
             const url = s3Input.replace("s3://", "").split(".")[0] + data.Job?.Settings.OutputGroups[0].CustomName + "." + ext;
             uploadThumbnail(url);
-            
+
           }
           setFlowWrap(Config.FLOW_SUCESS);
         }
@@ -355,10 +355,10 @@ export const UploadToS3 = (props) => {
     //console.logg('checking status');
 
     setTimeout(() => {
-      
+
       //console.logg('getting status', s3Input);
       getJobStatus(jobId, s3Input)
-      
+
     }, 10000);
 
   }
@@ -437,7 +437,7 @@ export const UploadToS3 = (props) => {
 
     //console.log(jobTemplate)
 
-    var endpointPromise = new AWS.MediaConvert({apiVersion: '2017-08-29'}).createJob(jobTemplate).promise();
+    const endpointPromise = new AWS.MediaConvert({apiVersion: '2017-08-29'}).createJob(jobTemplate).promise();
 
     // Handle promise's fulfilled/rejected status
     endpointPromise.then(
@@ -485,8 +485,8 @@ export const UploadToS3 = (props) => {
 
         if(progressVal === 100) {
 
-          if(type == Constants.TYPE_VIDEO) {
-            if((videoStartPosition != null && videoStartPosition > 0) 
+          if(type === Constants.TYPE_VIDEO) {
+            if((videoStartPosition != null && videoStartPosition > 0)
             || (videoEndPosition != null && videoEndPosition > 0)) {
               setFlowWrap(Config.FLOW_VIDEO_PROCESSING)
               createMediaConvertJob(props.bucket + "/" + fileName)
@@ -503,7 +503,7 @@ export const UploadToS3 = (props) => {
             setFlowWrap(Config.FLOW_SUCESS);
             clearInputs();
           }
-          
+
         }
 
       })
@@ -523,13 +523,13 @@ export const UploadToS3 = (props) => {
 
     //console.logg('props', props.type);
 
-    if(type == Constants.TYPE_IMAGE) {
+    if(type === Constants.TYPE_IMAGE) {
 
       if(flow === Config.FLOW_INIT) {
         refInputImage.current.click();
       }
 
-    } else if(type == Constants.TYPE_PDF) {
+    } else if(type === Constants.TYPE_PDF) {
 
       if(flow === Config.FLOW_INIT) {
         refInputPdf.current.click();
@@ -547,27 +547,28 @@ export const UploadToS3 = (props) => {
 
   function onFileSelectionChanged(event) {
 
-    if(type == Constants.TYPE_IMAGE) {
+    let reader;
+    if(type === Constants.TYPE_IMAGE) {
 
       const [file] = refInputImage.current.files
       //console.logg(file);
       if (file) {
-        var reader = new FileReader();
+        reader        = new FileReader();
         reader.onload = function(){
-  
-          var fileName = file.name;
-          var strArr = fileName.split(".");
+
+          const fileName = file.name;
+          const strArr = fileName.split(".");
           setExt(strArr[strArr.length - 1]);
           setFileType(file.type)
-  
-          var output = document.getElementById('output');
+
+          const output = document.getElementById('output');
           setSrc(reader.result);
           setFlowWrap(Config.FLOW_IMG_CHOSEN);
         };
         reader.readAsDataURL(file);
       }
 
-    } else if(type == Constants.TYPE_PDF) {
+    } else if(type === Constants.TYPE_PDF) {
 
       const [file] = refInputPdf.current.files
       if(file) {
@@ -576,17 +577,17 @@ export const UploadToS3 = (props) => {
         setPdfSize((file.size / 1024) + 'KB')
         setFlowWrap(Config.FLOW_PDF_CHOSEN);
 
-        var reader = new FileReader();
+        reader        = new FileReader();
         reader.onload = function(){
-  
+
           //console.logg(file);
-          var fileName = file.name;
-          var strArr = fileName.split(".");
+          const fileName = file.name;
+          const strArr = fileName.split(".");
           setExt(strArr[strArr.length - 1]);
           setFileType(file.type)
           setSrc(reader.result);
           //console.logg(reader.result);
-          
+
         };
         reader.readAsDataURL(file);
 
@@ -598,29 +599,29 @@ export const UploadToS3 = (props) => {
 //      console.log(file);
 
       if(file) {
-        var reader = new FileReader();
+        reader        = new FileReader();
         reader.onload = function(){
-  
-          var fileName = file.name;
-          var strArr = fileName.split(".");
+
+          const fileName = file.name;
+          const strArr = fileName.split(".");
           setVideoName(file.name);
           setVideoSize((file.size / 1024) + 'KB')
           setExt(strArr[strArr.length - 1]);
           setFileType(file.type)
-          setSrc(reader.result); 
+          setSrc(reader.result);
           setFlowWrap(Config.FLOW_VIDEO_CHOSEN);
-          
+
         };
         reader.readAsDataURL(file);
       }
 
       if(file) {
-        var video = document.createElement('video');
+        const video   = document.createElement('video');
         video.preload = 'metadata';
 
         video.onloadedmetadata = function() {
 
-          var duration = video.duration;
+          const duration = video.duration;
           setVideoDuration(parseInt(duration));
           setVideoWidth(parseInt(video.videoWidth));
           setVideoHeight(parseInt(video.videoHeight));
@@ -655,10 +656,10 @@ export const UploadToS3 = (props) => {
 
     ctxTemp.imageSmoothingEnabled = false;
     ctxTemp.drawImage(
-      refInputVideoPreview.current, 
-      0, 
-      0, 
-      videoWidth, 
+      refInputVideoPreview.current,
+      0,
+      0,
+      videoWidth,
       videoHeight);
 
     setSrcThumbnail(refCanvasThumbnail.current.toDataURL('image/jpeg'));
@@ -696,7 +697,7 @@ export const UploadToS3 = (props) => {
 
     if(flow === Config.FLOW_CROP) {
 
-      var image = new Image();
+      const image = new Image();
       image.src = src;
       image.onload = function(){
 
@@ -732,18 +733,18 @@ export const UploadToS3 = (props) => {
 
         ctxTemp.imageSmoothingEnabled = false;
         ctxTemp.drawImage(
-          image, 
-          sx1, 
-          sy1, 
-          sw, 
-          sh, 
-          dx, 
+          image,
+          sx1,
+          sy1,
+          sw,
+          sh,
+          dx,
           dy,
           dw,
           dh);
 
       }
-      
+
     }
 
   }, [flow, src, cropInitX1, cropInitX2, cropInitY1, cropInitY2])
@@ -782,7 +783,7 @@ export const UploadToS3 = (props) => {
 
       const canvas = refCanvasOverlay.current;
       if(canvas != null) {
-      
+
         const ctx = canvas.getContext('2d');
 
         const containerW = refCanvasContainer.current.clientWidth;
@@ -804,13 +805,13 @@ export const UploadToS3 = (props) => {
   useEffect(() => {
 
     //console.logg('useeffect', flow, teX, teY)
-    
+
     if(flow === Config.FLOW_CROP && teX > 0 && teY > 0) {
       guessMovement();
       setTeX(0);
       setTeY(0);
       setTsX(0);
-      setTsY(0);  
+      setTsY(0);
     }
 
   }, [teX, teY])
@@ -832,14 +833,17 @@ export const UploadToS3 = (props) => {
 
   function onMouseMove(event) {
 
-    //console.logg('mouesmove', event.type);
+    let y;
+    let x;
+    let rect;
+//console.logg('mouesmove', event.type);
 
-    if(event.type == 'mousemove') {
+    if(event.type === 'mousemove') {
 
       if(flow === Config.FLOW_CROP && tsX > 0 && tsY > 0) {
-        var rect = event.target.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var y = event.clientY - rect.top;
+        rect = event.target.getBoundingClientRect();
+        x    = event.clientX - rect.left;
+        y    = event.clientY - rect.top;
         setMoveX(parseInt(x))
         setMoveY(parseInt(y))
       }
@@ -847,9 +851,9 @@ export const UploadToS3 = (props) => {
     }  else {
 
       if(flow === Config.FLOW_CROP) {
-        var rect = event.target.getBoundingClientRect();
-        var x = event.changedTouches[0].clientX - rect.left;
-        var y = event.changedTouches[0].clientY - rect.top;
+        rect = event.target.getBoundingClientRect();
+        x = event.changedTouches[0].clientX - rect.left;
+        y = event.changedTouches[0].clientY - rect.top;
         setMoveX(parseInt(x))
         setMoveY(parseInt(y))
       }
@@ -859,13 +863,16 @@ export const UploadToS3 = (props) => {
 
   function onMouseDown(event) {
 
-    //console.logg(event.type);
+    let y;
+    let x;
+    let rect;
+//console.logg(event.type);
 
-    if(event.type == 'mousedown') {
+    if(event.type === 'mousedown') {
       if(flow === Config.FLOW_CROP) {
-        var rect = event.target.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var y = event.clientY - rect.top;
+        rect = event.target.getBoundingClientRect();
+        x    = event.clientX - rect.left;
+        y    = event.clientY - rect.top;
 
 
         //console.logg(event.clientX, event.clientY);
@@ -878,34 +885,37 @@ export const UploadToS3 = (props) => {
       }
     } else {
       if(flow === Config.FLOW_CROP) {
-        var rect = event.target.getBoundingClientRect();
-        var x = event.touches[0].clientX - rect.left;
-        var y = event.touches[0].clientY - rect.top;
+        rect = event.target.getBoundingClientRect();
+        x = event.touches[0].clientX - rect.left;
+        y = event.touches[0].clientY - rect.top;
         setTsX(parseInt(x))
         setTsY(parseInt(y))
       }
     }
 
-    
+
   }
 
   function onMouseUp(event) {
 
-    //console.logg('mouseUp', event.type)
+    let y;
+    let x;
+    let rect;
+//console.logg('mouseUp', event.type)
 
-    if(event.type == 'mouseup') {
+    if(event.type === 'mouseup') {
 
       if(flow === Config.FLOW_CROP) {
-        
-        var rect = event.target.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var y = event.clientY - rect.top;
+
+        rect = event.target.getBoundingClientRect();
+        x    = event.clientX - rect.left;
+        y    = event.clientY - rect.top;
 
         //console.logg(event.clientX, event.clientY);
         //console.logg(event.screenX, event.screenY);
         //console.logg(rect.left, rect.top);
 
-        
+
         setTeX(parseInt(x))
         setTeY(parseInt(y))
         setMoveX(0)
@@ -915,9 +925,9 @@ export const UploadToS3 = (props) => {
     } else {
 
       if(flow === Config.FLOW_CROP) {
-        var rect = event.target.getBoundingClientRect();
-        var x = event.changedTouches[0].clientX - rect.left;
-        var y = event.changedTouches[0].clientY - rect.top;
+        rect = event.target.getBoundingClientRect();
+        x = event.changedTouches[0].clientX - rect.left;
+        y = event.changedTouches[0].clientY - rect.top;
         setTeX(parseInt(x))
         setTeY(parseInt(y))
         setMoveX(0)
@@ -931,30 +941,30 @@ export const UploadToS3 = (props) => {
   // Code to move the edges
 
   function moveLeft(edge, percent) {
-    edge == 'L' ? setCropInitX1(cropInitX1 - percent > 0 ? cropInitX1 - percent : cropInitX1) : setCropInitX2(cropInitX2 - percent > Config.MAX_CROP ? cropInitX2 - percent : cropInitX2)
+    edge === 'L' ? setCropInitX1(cropInitX1 - percent > 0 ? cropInitX1 - percent : cropInitX1) : setCropInitX2(cropInitX2 - percent > Config.MAX_CROP ? cropInitX2 - percent : cropInitX2)
   }
 
   function moveRight(edge,percent) {
-    edge == 'L' ? setCropInitX1(cropInitX1 + percent < Config.MAX_CROP ? cropInitX1 + percent : cropInitX1) : setCropInitX2(cropInitX2 + percent < 100 ? cropInitX2 + percent : cropInitX2)
+    edge === 'L' ? setCropInitX1(cropInitX1 + percent < Config.MAX_CROP ? cropInitX1 + percent : cropInitX1) : setCropInitX2(cropInitX2 + percent < 100 ? cropInitX2 + percent : cropInitX2)
   }
 
   function moveAbove(edge,percent) {
-    edge == 'T' ? setCropInitY1(cropInitY1 - percent > 0 ? cropInitY1 - percent : cropInitY1) : setCropInitY2(cropInitY2 - percent > Config.MAX_CROP ? cropInitY2 - percent : cropInitY2)
+    edge === 'T' ? setCropInitY1(cropInitY1 - percent > 0 ? cropInitY1 - percent : cropInitY1) : setCropInitY2(cropInitY2 - percent > Config.MAX_CROP ? cropInitY2 - percent : cropInitY2)
   }
 
   function moveBelow(edge,percent) {
-    edge == 'T' ? setCropInitY1(cropInitY1 + percent < (100 - Config.MAX_CROP) ? cropInitY1 + percent : cropInitY1) : setCropInitY2(cropInitY2 + percent < 100 ? cropInitY2 + percent : cropInitY2)
+    edge === 'T' ? setCropInitY1(cropInitY1 + percent < (100 - Config.MAX_CROP) ? cropInitY1 + percent : cropInitY1) : setCropInitY2(cropInitY2 + percent < 100 ? cropInitY2 + percent : cropInitY2)
   }
 
-  
+
   //Calculates the actual movement as a result of drag
 
   function guessMovement() {
 
     // Guess the direction
 
-    var axis = "";
-    var direction = "";
+    let axis      = "";
+    let direction = "";
 
     const movementX = (teX - tsX);
     const movementY = (teY - tsY);
@@ -987,53 +997,53 @@ export const UploadToS3 = (props) => {
 
     if(((Math.abs(tsX - (cropInitX1*containerW)/100) * 100)/canvasW) < Config.CROP_EDGE_SENSITIVITY && ((Math.abs(tsY - (cropInitY1*containerH)/100) * 100)/canvasH) < Config.CROP_EDGE_SENSITIVITY) {
       //console.logg('TL', axis, direction);
-      if(axis == 'H' && direction == "L") moveLeft('L', (absMovementX*100)/containerW)
-      if(axis == 'H' && direction == "R") moveRight('L', (absMovementX*100)/containerW)
-      if(axis == 'V' && direction == "T") moveAbove('T', (absMovementY*100)/containerW)
-      if(axis == 'V' && direction == "B") moveBelow('T', (absMovementY*100)/containerW)
+      if(axis === 'H' && direction === "L") moveLeft('L', (absMovementX*100)/containerW)
+      if(axis === 'H' && direction === "R") moveRight('L', (absMovementX*100)/containerW)
+      if(axis === 'V' && direction === "T") moveAbove('T', (absMovementY*100)/containerW)
+      if(axis === 'V' && direction === "B") moveBelow('T', (absMovementY*100)/containerW)
     } else if(((Math.abs(tsX - (cropInitX1*containerW)/100) * 100)/canvasW) < Config.CROP_EDGE_SENSITIVITY && ((Math.abs(tsY - (cropInitY2*containerH)/100) * 100)/canvasH) < Config.CROP_EDGE_SENSITIVITY) {
       //console.logg('BL', axis, direction);
-      if(axis == 'H' && direction == "L") moveLeft('L', (absMovementX*100)/containerW)
-      if(axis == 'H' && direction == "R") moveRight('L', (absMovementX*100)/containerW)
-      if(axis == 'V' && direction == "T") moveAbove('B', (absMovementY*100)/containerW)
-      if(axis == 'V' && direction == "B") moveBelow('B', (absMovementY*100)/containerW)
+      if(axis === 'H' && direction === "L") moveLeft('L', (absMovementX*100)/containerW)
+      if(axis === 'H' && direction === "R") moveRight('L', (absMovementX*100)/containerW)
+      if(axis === 'V' && direction === "T") moveAbove('B', (absMovementY*100)/containerW)
+      if(axis === 'V' && direction === "B") moveBelow('B', (absMovementY*100)/containerW)
     } else if(((Math.abs(tsX - (cropInitX2*containerW)/100) * 100)/canvasW) < Config.CROP_EDGE_SENSITIVITY && ((Math.abs(tsY - (cropInitY2*containerH)/100) * 100)/canvasH) < Config.CROP_EDGE_SENSITIVITY) {
       //console.logg('BR', axis, direction);
-      if(axis == 'H' && direction == "L") moveLeft('R', (absMovementX*100)/containerW)
-      if(axis == 'H' && direction == "R") moveRight('R', (absMovementX*100)/containerW)
-      if(axis == 'V' && direction == "T") moveAbove('B', (absMovementY*100)/containerW)
-      if(axis == 'V' && direction == "B") moveBelow('B', (absMovementY*100)/containerW)
+      if(axis === 'H' && direction === "L") moveLeft('R', (absMovementX*100)/containerW)
+      if(axis === 'H' && direction === "R") moveRight('R', (absMovementX*100)/containerW)
+      if(axis === 'V' && direction === "T") moveAbove('B', (absMovementY*100)/containerW)
+      if(axis === 'V' && direction === "B") moveBelow('B', (absMovementY*100)/containerW)
     } else if(((Math.abs(tsX - (cropInitX2*containerW)/100) * 100)/canvasW) < Config.CROP_EDGE_SENSITIVITY && ((Math.abs(tsY - (cropInitY1*containerH)/100) * 100)/canvasH) < Config.CROP_EDGE_SENSITIVITY) {
       //console.logg('TR', axis, direction);
-      if(axis == 'H' && direction == "L") moveLeft('R', (absMovementX*100)/containerW)
-      if(axis == 'H' && direction == "R") moveRight('R', (absMovementX*100)/containerW)
-      if(axis == 'V' && direction == "T") moveAbove('T', (absMovementY*100)/containerW)
-      if(axis == 'V' && direction == "B") moveBelow('T', (absMovementY*100)/containerW)
+      if(axis === 'H' && direction === "L") moveLeft('R', (absMovementX*100)/containerW)
+      if(axis === 'H' && direction === "R") moveRight('R', (absMovementX*100)/containerW)
+      if(axis === 'V' && direction === "T") moveAbove('T', (absMovementY*100)/containerW)
+      if(axis === 'V' && direction === "B") moveBelow('T', (absMovementY*100)/containerW)
     } else if(((Math.abs(tsX - (cropInitX1*containerW)/100) * 100)/canvasW) < Config.CROP_EDGE_SENSITIVITY) {
       //console.logg('LE', axis, direction);
-      if(axis == 'H' && direction == "L") moveLeft('L', (absMovementX*100)/containerW)
-      if(axis == 'H' && direction == "R") moveRight('L', (absMovementX*100)/containerW)
+      if(axis === 'H' && direction === "L") moveLeft('L', (absMovementX*100)/containerW)
+      if(axis === 'H' && direction === "R") moveRight('L', (absMovementX*100)/containerW)
     } else if(((Math.abs(tsX - (cropInitX2*containerW)/100) * 100)/canvasW) < Config.CROP_EDGE_SENSITIVITY) {
       //console.logg('RE', axis, direction);
-      if(axis == 'H' && direction == "L") moveLeft('R', (absMovementX*100)/containerW)
-      if(axis == 'H' && direction == "R") moveRight('R', (absMovementX*100)/containerW)
+      if(axis === 'H' && direction === "L") moveLeft('R', (absMovementX*100)/containerW)
+      if(axis === 'H' && direction === "R") moveRight('R', (absMovementX*100)/containerW)
     } else if(((Math.abs(tsY - (cropInitY1*containerH)/100) * 100)/canvasH) < Config.CROP_EDGE_SENSITIVITY) {
       //console.logg('TE', axis, direction);
-      if(axis == 'V' && direction == "T") moveAbove('T', (absMovementY*100)/containerW)
-      if(axis == 'V' && direction == "B") moveBelow('T', (absMovementY*100)/containerW)
+      if(axis === 'V' && direction === "T") moveAbove('T', (absMovementY*100)/containerW)
+      if(axis === 'V' && direction === "B") moveBelow('T', (absMovementY*100)/containerW)
     } else if(((Math.abs(tsY - (cropInitY2*containerH)/100) * 100)/canvasH) < Config.CROP_EDGE_SENSITIVITY) {
       //console.logg('BE', axis, direction);
-      if(axis == 'V' && direction == "T") moveAbove('B', (absMovementY*100)/containerW)
-      if(axis == 'V' && direction == "B") moveBelow('B', (absMovementY*100)/containerW)
+      if(axis === 'V' && direction === "T") moveAbove('B', (absMovementY*100)/containerW)
+      if(axis === 'V' && direction === "B") moveBelow('B', (absMovementY*100)/containerW)
     } else {
       //console.logg('CE', axis, direction);
-      if(axis == 'H' && direction == "L") {
+      if(axis === 'H' && direction === "L") {
         moveLeft('L', (absMovementX*100)/containerW)
         moveLeft('R', (absMovementX*100)/containerW)
-      } else if (axis == 'H' && direction == "R") {
+      } else if (axis === 'H' && direction === "R") {
         moveRight('L', (absMovementX*100)/containerW)
         moveRight('R', (absMovementX*100)/containerW)
-      } else if(axis == 'V' && direction == "T") {
+      } else if(axis === 'V' && direction === "T") {
         moveAbove('T', (absMovementY*100)/containerW)
         moveAbove('B', (absMovementY*100)/containerW)
       } else {
@@ -1060,7 +1070,7 @@ export const UploadToS3 = (props) => {
     >
       <Row className='justify-content-center'>
         <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex align-items-center px-3 pt-2 pb-1`} >
-          <div 
+          <div
             className='me-3'
             style={{
               color: props.theme != null ? props.theme.uploadToS3TitleColor : defaultTheme.uploadToS3TitleColor
@@ -1081,22 +1091,22 @@ export const UploadToS3 = (props) => {
             }}>
             <small>
               {
-                flow === Config.FLOW_INIT ? (type == 'image' ? 'Images ' + Constants.HINT_FLOW_INIT : type == 'video' ? 'Videos ' + Constants.HINT_FLOW_INIT : 'PDFs ' + Constants.HINT_FLOW_INIT) : flow === Config.FLOW_IMG_CHOSEN ? Constants.HINT_FLOW_IMAGE_CHOSEN : flow === Config.FLOW_CROP ? Constants.HINT_FLOW_CROP : flow === Config.FLOW_PREVIEW ? Constants.HINT_FLOW_PREVIEW : flow === Config.FLOW_UPLOAD ? Constants.HINT_FLOW_UPLOAD : flow === Config.FLOW_SUCESS ? Constants.HINT_FLOW_SUCCESS : flow === Config.FLOW_ERROR ? Constants.HINT_FLOW_ERROR : flow === Config.FLOW_PDF_CHOSEN ? Constants.HINT_FLOW_PDF_CHOSEN : flow === Config.FLOW_PDF_PREVIEW ? Constants.HINT_FLOW_PDF_PREVIEW : flow === Config.FLOW_VIDEO_CHOSEN ? Constants.HINT_FLOW_VIDEO_CHOSEN : flow === Config.FLOW_VIDEO_PREVIEW ? Constants.HINT_FLOW_VIDEO_PREVIEW : flow === Config.FLOW_VIDEO_PROCESSING ? Constants.HINT_FLOW_VIDEO_PROCESSING : ""
+                flow === Config.FLOW_INIT ? (type === 'image' ? 'Images ' + Constants.HINT_FLOW_INIT : type === 'video' ? 'Videos ' + Constants.HINT_FLOW_INIT : 'PDFs ' + Constants.HINT_FLOW_INIT) : flow === Config.FLOW_IMG_CHOSEN ? Constants.HINT_FLOW_IMAGE_CHOSEN : flow === Config.FLOW_CROP ? Constants.HINT_FLOW_CROP : flow === Config.FLOW_PREVIEW ? Constants.HINT_FLOW_PREVIEW : flow === Config.FLOW_UPLOAD ? Constants.HINT_FLOW_UPLOAD : flow === Config.FLOW_SUCESS ? Constants.HINT_FLOW_SUCCESS : flow === Config.FLOW_ERROR ? Constants.HINT_FLOW_ERROR : flow === Config.FLOW_PDF_CHOSEN ? Constants.HINT_FLOW_PDF_CHOSEN : flow === Config.FLOW_PDF_PREVIEW ? Constants.HINT_FLOW_PDF_PREVIEW : flow === Config.FLOW_VIDEO_CHOSEN ? Constants.HINT_FLOW_VIDEO_CHOSEN : flow === Config.FLOW_VIDEO_PREVIEW ? Constants.HINT_FLOW_VIDEO_PREVIEW : flow === Config.FLOW_VIDEO_PROCESSING ? Constants.HINT_FLOW_VIDEO_PROCESSING : ""
               }
             </small>
           </div>
         </Col>
       </Row>
-      {flow === Config.FLOW_INIT && 
+      {flow === Config.FLOW_INIT &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex text-small justify-content-start pt-3'>
-              <ButtonNext caption="Choose" disabled={false} icon={type=="image" ? 'FileImage' : type=="pdf" ? 'FilePdf' : 'FilePlay'} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3ChooseBackgroundColor : defaultTheme.uploadToS3ChooseBackgroundColor, color: props.theme != null ? props.theme.uploadToS3ChooseColor : defaultTheme.uploadToS3ChooseColor}}/>
+              <ButtonNext caption="Choose" disabled={false} icon={type==="image" ? 'FileImage' : type==="pdf" ? 'FilePdf' : 'FilePlay'} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3ChooseBackgroundColor : defaultTheme.uploadToS3ChooseBackgroundColor, color: props.theme != null ? props.theme.uploadToS3ChooseColor : defaultTheme.uploadToS3ChooseColor}}/>
             </div>
           </Col>
         </Row>
       }
-      {(flow === Config.FLOW_IMG_CHOSEN) && 
+      {(flow === Config.FLOW_IMG_CHOSEN) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1111,10 +1121,10 @@ export const UploadToS3 = (props) => {
           </Col>
         </Row>
       }
-      {(flow === Config.FLOW_PDF_CHOSEN) && 
+      {(flow === Config.FLOW_PDF_CHOSEN) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted mt-3`} >
-            
+
             <div className="alert alert-secondary" role="alert">
               <FilePdf className='me-2' style={{marginBottom: '2px'}}/>
               {
@@ -1124,10 +1134,10 @@ export const UploadToS3 = (props) => {
           </Col>
         </Row>
       }
-      {(flow === Config.FLOW_VIDEO_CHOSEN) && 
+      {(flow === Config.FLOW_VIDEO_CHOSEN) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted mt-3`} >
-            
+
             <div className="alert alert-secondary" role="alert">
               <FileEarmarkPlay className='me-2' style={{marginBottom: '2px'}}/>
               {
@@ -1145,7 +1155,7 @@ export const UploadToS3 = (props) => {
           </Col>
         </Row>
       }
-      {(flow === Config.FLOW_PDF_CHOSEN) && 
+      {(flow === Config.FLOW_PDF_CHOSEN) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1160,7 +1170,7 @@ export const UploadToS3 = (props) => {
           </Col>
         </Row>
       }
-      {(flow === Config.FLOW_VIDEO_CHOSEN) && 
+      {(flow === Config.FLOW_VIDEO_CHOSEN) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1173,7 +1183,7 @@ export const UploadToS3 = (props) => {
           </Col>
         </Row>
       }
-      {(flow === Config.FLOW_CROP) && 
+      {(flow === Config.FLOW_CROP) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1189,7 +1199,7 @@ export const UploadToS3 = (props) => {
         </Row>
       }
 
-      {(flow === Config.FLOW_PREVIEW) && 
+      {(flow === Config.FLOW_PREVIEW) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1202,7 +1212,7 @@ export const UploadToS3 = (props) => {
         </Row>
       }
 
-      {(flow === Config.FLOW_PDF_PREVIEW) && 
+      {(flow === Config.FLOW_PDF_PREVIEW) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1215,7 +1225,7 @@ export const UploadToS3 = (props) => {
         </Row>
       }
 
-      {(flow === Config.FLOW_VIDEO_PREVIEW) && 
+      {(flow === Config.FLOW_VIDEO_PREVIEW) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1227,13 +1237,13 @@ export const UploadToS3 = (props) => {
                 {(videoStartPosition == null || (videoStartPosition === 0 && videoEndPosition === 0)) && <ButtonNeutral className="me-2" caption="Upload Clip" disabled={true} icon="Scissors" />}
               </div>
               {(videoStartPosition == null || (videoStartPosition === 0 && videoEndPosition === 0)) && <ButtonNeutral caption="Upload" disabled={false} icon="Upload" onClick={(event) => {event.stopPropagation(); onUploadClick()}} custom={{backgroundColor: props.theme != null ? props.theme.uploadToS3UploadBackgroundColor : defaultTheme.uploadToS3UploadBackgroundColor, color: props.theme != null ? props.theme.uploadToS3UploadColor : defaultTheme.uploadToS3UploadColor}} />}
-              
+
             </div>
           </Col>
         </Row>
       }
 
-      {(flow === Config.FLOW_SUCESS && (props.showNewUpload == null || (props.showNewUpload != null && props.showNewUpload != false))) && 
+      {(flow === Config.FLOW_SUCESS && (props.showNewUpload == null || (props.showNewUpload != null && props.showNewUpload != false))) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1243,7 +1253,7 @@ export const UploadToS3 = (props) => {
         </Row>
       }
 
-      {(flow === Config.FLOW_ERROR) && 
+      {(flow === Config.FLOW_ERROR) &&
         <Row className='justify-content-center'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
             <div className='d-flex flex-grow-1 text-small justify-content-end pt-3'>
@@ -1275,10 +1285,10 @@ export const UploadToS3 = (props) => {
                   </div>
                   <div className='d-flex justify-content-between align-items-center mb-3'>
                     <div className='d-flex align-items-center' >
-                      <canvas className='me-3 rounded-3' ref={refCanvasThumbnail} style={{width: Config.THUMBNAIL_WIDTH + 'px'}} /> 
+                      <canvas className='me-3 rounded-3' ref={refCanvasThumbnail} style={{width: Config.THUMBNAIL_WIDTH + 'px'}} />
                       <Button variant="btn btn-sm btn-secondary py-1 px-2" onClick={() => {captureThumbnail()}}>Capture&nbsp;&nbsp;<CameraFill style={{marginBottom: '2px'}}/></Button>
                     </div>
-                    <Button variant="btn btn-sm btn-outline py-1 px-2 ms-3" onClick={() => {showThumbnail(true)}}>View&nbsp;&nbsp;<Icons.EyeFill style={{marginBottom: '2px'}}/></Button>                    
+                    <Button variant="btn btn-sm btn-outline py-1 px-2 ms-3" onClick={() => {showThumbnail(true)}}>View&nbsp;&nbsp;<Icons.EyeFill style={{marginBottom: '2px'}}/></Button>
                   </div>
 
                 </Col>
@@ -1300,7 +1310,7 @@ export const UploadToS3 = (props) => {
                         position: 'relative',
                         }}>
                         <video ref={refInputVideoPreview} controls autoPlay style={{backgroundColor: 'black', width: '100%', height: '50vh'}} src={src} onTimeUpdate={onTimeUpdate}></video>
-                        <div 
+                        <div
                           style={{
                             position: 'absolute',
                             left: windowDimensions.height < windowDimensions.width ? '2%' : '5%',
@@ -1309,53 +1319,53 @@ export const UploadToS3 = (props) => {
                             width: windowDimensions.height < windowDimensions.width ? '96%' : '90%',
                             pointerEvents: 'none'
                           }}>
-                          <div 
+                          <div
                             style={{
                               position: 'absolute',
                               top: '80%',
                               left: '0px',
                               background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
                               opacity: '0.3',
-                              width: (videoStartPosition == null || videoStartPosition == 0) ? '0%' : (((videoStartPosition*100)/videoDuration)) + '%',
+                              width: (videoStartPosition == null || videoStartPosition === 0) ? '0%' : (((videoStartPosition*100)/videoDuration)) + '%',
                               height: '20%',
                               pointerEvents: 'none',
                               borderRight: 'dotted 1px white'
                             }}>
                           </div>
-                          <div 
+                          <div
                             style={{
                               position: 'absolute',
                               top: '0px',
                               left: '0px',
                               background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
                               opacity: '0.3',
-                              width: (videoStartPosition == null || videoStartPosition == 0) ? '0%' : (((videoStartPosition*100)/videoDuration)) + '%',
+                              width: (videoStartPosition == null || videoStartPosition === 0) ? '0%' : (((videoStartPosition*100)/videoDuration)) + '%',
                               height: '20%',
                               pointerEvents: 'none',
                               borderRight: 'dotted 1px white'
                             }}>
                           </div>
-                          <div 
+                          <div
                             style={{
                               position: 'absolute',
                               top: '80%',
                               right: '0px',
                               background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
                               opacity: '0.3',
-                              width: (videoEndPosition == null || videoEndPosition == 0) ? '0%' : (((videoDuration - videoEndPosition)*100)/videoDuration) + '%',
+                              width: (videoEndPosition == null || videoEndPosition === 0) ? '0%' : (((videoDuration - videoEndPosition)*100)/videoDuration) + '%',
                               height: '20%',
                               pointerEvents: 'none',
                               borderRight: 'dotted 1px left'
                             }}>
                           </div>
-                          <div 
+                          <div
                             style={{
                               position: 'absolute',
                               top: '0px',
                               right: '0px',
                               background: 'repeating-linear-gradient(135deg, white,white 10px,red 10px,red 20px',
                               opacity: '0.3',
-                              width: (videoEndPosition == null || videoEndPosition == 0) ? '0%' : (((videoDuration - videoEndPosition)*100)/videoDuration) + '%',
+                              width: (videoEndPosition == null || videoEndPosition === 0) ? '0%' : (((videoDuration - videoEndPosition)*100)/videoDuration) + '%',
                               height: '20%',
                               pointerEvents: 'none',
                               borderRight: 'dotted 1px left'
@@ -1368,7 +1378,7 @@ export const UploadToS3 = (props) => {
                     <div className='w-100 p-2' style={{position: 'absolute', top: '0px', left: '0px'}}>
 
                       <div className='d-flex flex-wrap align-items-center justify-content-between'>
-                        
+
                         <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>
                           <ButtonNeutral caption="Mark Start" disabled={disableMarkStart} icon="Scissors" onClick={onMarkStartPosition} />
                         </div>
@@ -1377,11 +1387,11 @@ export const UploadToS3 = (props) => {
                         </div>
 
                       </div>
-                      
+
                       <div className='d-flex flex-wrap align-items-center justify-content-between text-muted'>
                         <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>
                           <small>
-                            {(videoStartPosition != null && videoStartPosition > 0) && 
+                            {(videoStartPosition != null && videoStartPosition > 0) &&
                             <div className='d-flex align-items-center' onClick={gotoStartPosition} style={{backgroundColor: 'black', color: 'white'}}>
                               {new Date(videoStartPosition * 1000).toISOString().substring(11, 19)}
                               &nbsp;
@@ -1390,9 +1400,9 @@ export const UploadToS3 = (props) => {
                             }
                           </small>
                         </div>
-                        <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>            
+                        <div className='d-flex align-items-center' style={{cursor: 'pointer'}}>
                           <small>
-                          {(videoEndPosition != null && videoEndPosition > 0) && 
+                          {(videoEndPosition != null && videoEndPosition > 0) &&
                             <div className='d-flex align-items-center' onClick={gotoEndPosition} style={{backgroundColor: 'black', color: 'white'}}>
                               <BoxArrowLeft />
                               &nbsp;
@@ -1413,20 +1423,20 @@ export const UploadToS3 = (props) => {
               </Row>
               <div className='d-flex justify-content-start align-items-start'>
                 <div className='d-flex justify-content-start align-items-start flex-column' style={{position: 'relative'}}>
-                    
+
                 </div>
                 <div className='flex-grow-1' style={{position: 'relative'}}>
 
 
                 </div>
               </div>
-              
+
             </Container>
           </Col>
         </Row>
       }
 
-      {(flow === Config.FLOW_VIDEO_PREVIEW && subFlow === Config.FLOW_VIDEO_PREVIEW_THUMBNAIL_VIEW) && 
+      {(flow === Config.FLOW_VIDEO_PREVIEW && subFlow === Config.FLOW_VIDEO_PREVIEW_THUMBNAIL_VIEW) &&
         <div className='d-flex justify-content-center align-items-center' style={{
           position: 'fixed',
           width: '100%',
@@ -1467,8 +1477,8 @@ export const UploadToS3 = (props) => {
       {(flow === Config.FLOW_IMG_CHOSEN || flow === Config.FLOW_CROP || flow === Config.FLOW_PREVIEW) &&
         <Row className='justify-content-center mt-2'>
           <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
-            <div 
-              ref={refCanvasContainer} 
+            <div
+              ref={refCanvasContainer}
               onTouchMove={(event) => {onMouseMove(event)}}
               onTouchStart={(event) => {onMouseDown(event)}}
               onTouchEnd={(event) => {onMouseUp(event)}}
@@ -1478,18 +1488,18 @@ export const UploadToS3 = (props) => {
               onMouseMove={(event) => {onMouseMove(event)}}
               onMouseDown={(event) => {onMouseDown(event)}}
               onMouseUp={(event) => {onMouseUp(event)}}
-              className='d-flex text-small justify-content-start mt-3 w-100' 
+              className='d-flex text-small justify-content-start mt-3 w-100'
               style={{position: 'relative'}}>
-              
-              <img src={src} className="w-100" 
+
+              <img src={src} className="w-100"
                 style={{
                   backgroundColor: 'black',
                   visibility: flow === Config.FLOW_PREVIEW ? 'hidden' : 'visible',
                   pointerEvents: 'none'
                 }}
                 />
-              
-              
+
+
               {flow === Config.FLOW_CROP && <div style={{
                 position: 'absolute',
                 left: '0px',
@@ -1504,8 +1514,8 @@ export const UploadToS3 = (props) => {
               }}>
 
               </div>}
-              
-              {(flow === Config.FLOW_CROP || flow === Config.FLOW_PREVIEW) && <div 
+
+              {(flow === Config.FLOW_CROP || flow === Config.FLOW_PREVIEW) && <div
                 style={{
                   position: 'absolute',
                   left: cropInitX1 + '%',
@@ -1529,7 +1539,7 @@ export const UploadToS3 = (props) => {
                       <canvas ref={refCanvas} className="w-100 h-100" style={{backgroundColor: 'transparent', imageRendering: 'pixelated', imageRendering: 'optimizespeed', pointerEvents: 'none'}}></canvas>
               </div>}
 
-              {flow === Config.FLOW_CROP && <div 
+              {flow === Config.FLOW_CROP && <div
                 style={{
                   position: 'absolute',
                   left: '0%',
@@ -1546,7 +1556,7 @@ export const UploadToS3 = (props) => {
           </Col>
         </Row>
       }
-      
+
       <Row className='justify-content-center' style={{display: 'none'}}>
         <Col sm={12} xs={12} md={12} xxl={12} className={`d-flex flex-wrap align-items-center px-3 text-muted`} >
           <CloudArrowUp className='me-3 ms-2' style={{visibility: 'hidden'}}/>
