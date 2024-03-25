@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useEffect } from 'react'
 import { useState, useRef } from 'react'
 import { Col, Row, Container, Button } from 'react-bootstrap';
@@ -266,7 +267,7 @@ export const UploadToS3 = (props) => {
     const fileName = type + "_" + (new Date().getTime()) + ".jpg";
 
     const params = {
-        ACL: 'public-read',
+        ACL: props.bucketACL || 'public-read',
         Body: blob,
         Bucket: props.bucket,
         Key: fileName,
@@ -467,7 +468,7 @@ export const UploadToS3 = (props) => {
     const fileName = type + "_" + (new Date().getTime()) + "." + ext;
 
     const params = {
-        ACL: 'public-read',
+        ACL: props.bucketACL || 'public-read',
         Body: blob,
         Bucket: props.bucket,
         Key: fileName,
